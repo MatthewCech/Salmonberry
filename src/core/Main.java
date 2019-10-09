@@ -1,14 +1,16 @@
 package core;
 
+import core.server.WebApp;
+
 public class Main
 {
-	static App salmonberry;
+	static WebApp salmonberry;
 	
 	public static void main(String[] args)
 	{
 		try
 		{
-			salmonberry = new App();
+			salmonberry = new WebApp();
 		}
 		catch (Exception e)
 		{

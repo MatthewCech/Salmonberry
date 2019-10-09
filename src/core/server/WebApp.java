@@ -1,20 +1,21 @@
-package core;
+package core.server;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
+import core.Note;
 import fi.iki.elonen.NanoHTTPD;
 
-public class App extends NanoHTTPD
+public class WebApp extends NanoHTTPD
 {
 	// Variables
 	private Map<String, String> pages;
 	private DirectoryMonitor monitor;
 	
 	// Constructor
-	public App() throws IOException
+	public WebApp() throws IOException
 	{
 		super(8080);
 		
