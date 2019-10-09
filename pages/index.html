@@ -36,4 +36,18 @@
 			</div>
 		</form>
 	</body>
+	<script type="text/javascript">
+		window.addEventListener('keydown', (e) => {
+			if(e.key == "ArrowLeft") { window.location.href = "?input=L"; }
+			if(e.key == "ArrowRight") { window.location.href = "?input=R"; }
+			if(e.key == "ArrowUp") { window.location.href = "?input=U"; }
+			if(e.key == "ArrowDown") { window.location.href = "?input=D"; }
+			if(e.key == "w") { window.location.href = "?input=U"; }
+			if(e.key == "a") { window.location.href = "?input=L"; }
+			if(e.key == "s") { window.location.href = "?input=D"; }
+			if(e.key == "d") { window.location.href = "?input=R"; }
+		});
+
+
+	</script>
 </html>
