@@ -17,51 +17,115 @@
 		}
 		.s-btn-group {
 			text-align: center;
-			width: 100px;
+			width: 280px;
+			float: left;
 		}
 	</style>
 
 	<body>
+		<div style="max-width: 600px; margin-left: auto; margin-right: auto;">
 		<h2>Salmonberry</h2>
 		<hr/>
-		<pre>{{content}}</pre>
-		<form action='?' method='get'>
-			<div class="s-btn-group">
-				<input class="s-btn" type="submit" name="input" value="U" onClick="submit">
-				<br/>
-				<input class="s-btn" type="submit" name="input" value="L" onClick="submit">
-				<input class="s-btn" type="submit" name="input" value="R" onClick="submit">
-				<br/>
-				<input class="s-btn" type="submit" name="input" value="D" onClick="submit">
-			</div>
-		</form>
-	</body>
-	<script type="text/javascript">
-		window.addEventListener('keydown', (e) => {
-			switch(e.key) {
-				case "ArrowLeft": qs("L"); break;
-				case "ArrowRight": qs("R"); break;
-				case "ArrowUp": qs("U"); break;
-				case "ArrowDown": qs("D"); break;
-				case "w": qs("U"); break;
-				case "a": qs("L"); break;
-				case "s": qs("D"); break;
-				case "d": qs("R"); break;
+		<pre style="text-align: center;">{{content}}</pre>
+		<br/>
+		<hr/>
+		<div class="s-btn-group">
+			<form action='?' method='get'>
+					ID: <input id="s-id" class="s-btn" type="input" name="id" required>
+					Icon: <input id="s-icon" class="s-btn" type="input" name="icon" required>
+					<button id="s-create">Create at 0,0</button>
+					<br/>
+					<br/>
+					<input id="s-b-u" class="s-btn" type="button" name="input" value="U" onClick="qs('U');" style="display: none;">
+					
+					<br/>
+					<input id="s-b-l" class="s-btn" type="button" name="input" value="L" onClick="qs('L');" style="display: none;">
+					<input id="s-b-r" class="s-btn" type="button" name="input" value="R" onClick="qs('R');" style="display: none;">
+					
+					<br/>
+					<input id="s-b-d" class="s-btn" type="button" name="input" value="D" onClick="qs('D');" style="display: none;">
+			</form>
+		</div>
+		<div style="float: right;">
+			<button onClick="reload();">Reload</button> - <button onClick="reset();">Reset</button>
+		</div>
+		</div>
+
+
+		<!-- Page interactions -->
+		<script type="text/javascript">
+			let canInput = false;
+			window.addEventListener('keydown', (e) => {
+				if(canInput) {
+					switch(e.key) {
+						case "ArrowLeft": qs("L"); break;
+						case "ArrowRight": qs("R"); break;
+						case "ArrowUp": qs("U"); break;
+						case "ArrowDown": qs("D"); break;
+					}
+				}
+			});
+
+			function qs(dir) {
+				window.location.href = "?input=" + dir + "&id=" + document.getElementById('s-id').value + "&icon=" + document.getElementById('s-icon').value;
 			}
-		});
 
-		function qs(dir) {
-			window.location.href = "?input=" + dir;
-		}
+			// From https://davidwalsh.name/query-string-javascript
+			function getUrlParameter(name) {
+				name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+				var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+				var results = regex.exec(location.search);
+				return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+			};
 
-		function getPath() {
-			return ("" + window.location.href).split("?")[0];
-		}
+			// From https://stackoverflow.com/a/26257722/5383198
+			function removeURLParameter(url, parameter) {
+				let urlparts= url.split('?');   
 
-		function reload() {
-			window.location.href = getPath();
-		}
+				if (urlparts.length >= 2) {
+					let prefix = encodeURIComponent(parameter)+'=';
+					let pars = urlparts[1].split(/[&;]/g);
 
-		//setTimeout(reload, 1000);
-	</script>
+					for (let i = pars.length; i-- > 0;) {
+						if (pars[i].lastIndexOf(prefix, 0) !== -1) {  
+							pars.splice(i, 1);
+						}
+					}
+
+					url = urlparts[0] + '?' + pars.join('&');
+				}
+
+				return url;
+			}
+
+			function reload() {
+				window.location.href = removeURLParameter(window.location.href, "input");
+			}
+
+			function reset() {
+				window.location.href = window.location.href.split('?')[0];
+			}
+
+			//setTimeout(reload, 1000);
+
+			// Set-up code here
+			let id = getUrlParameter('id');
+			let icon = getUrlParameter('icon');
+			if(id && icon)
+			{
+				document.getElementById('s-id').value = id;
+				document.getElementById('s-id').disabled = true;
+				document.getElementById('s-icon').value = icon;
+				document.getElementById('s-icon').disabled = true;
+
+				document.getElementById('s-b-u').style.display = "initial";
+				document.getElementById('s-b-d').style.display = "initial";
+				document.getElementById('s-b-l').style.display = "initial";
+				document.getElementById('s-b-r').style.display = "initial";
+				canInput = true;
+
+				document.getElementById('s-create').style.display = "none";
+			}
+		</script>
+	</body>
 </html>
