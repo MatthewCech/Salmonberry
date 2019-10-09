@@ -8,13 +8,11 @@ public class Main
 	
 	public static void main(String[] args)
 	{
-		try
+		salmonberry = new WebApp();
+		
+		while(true)
 		{
-			salmonberry = new WebApp();
-		}
-		catch (Exception e)
-		{
-			Note.Error("Server level exception - Terminating server\n" + e);
+			salmonberry.update();
 		}
 	}
 }

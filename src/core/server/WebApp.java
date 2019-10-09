@@ -5,8 +5,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
-import core.Note;
 import fi.iki.elonen.NanoHTTPD;
+import util.Note;
 
 public class WebApp extends NanoHTTPD
 {
@@ -15,12 +15,19 @@ public class WebApp extends NanoHTTPD
 	private DirectoryMonitor monitor;
 	
 	// Constructor
-	public WebApp() throws IOException
+	public WebApp()
 	{
 		super(8080);
-		
-		// Start up server
-		start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
+	
+		try
+		{
+			start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
+		}
+		catch(IOException e)
+		{
+			Note.Error("Failed to start server!\n" + e);
+			return;
+		}
 		
 		Note.Log("Running at http://localhost:8080/\n");
 		
@@ -28,14 +35,13 @@ public class WebApp extends NanoHTTPD
 		monitor = new DirectoryMonitor(Paths.get(DirectoryMonitor.defaultDir));
 		pages = monitor.getFileContents();
 		
-		// Start up main program loop
-		run();
 	}
 	
-	// The primary application loop for general functions
-	public void run()
+	// The primary application loop for general functions. Returns true
+	// if it's operating normally, false if not.
+	public boolean update()
 	{
-		while(true)
+		try
 		{
 			if(monitor.update())
 			{
@@ -43,6 +49,13 @@ public class WebApp extends NanoHTTPD
 				pages.forEach((key, value) -> { Note.Log("File '" + key + "' found, has " + value.length() + " chars in it."); });
 			}
 		}
+		catch(Exception e)
+		{
+			Note.Error("Error during webapp updating!\n" + e);
+			return false;
+		}
+		
+		return true;
 	}
 	
 	@Override
