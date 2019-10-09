@@ -22,7 +22,7 @@
 	</style>
 
 	<body>
-		<h2>Salmonberry Sever Dashboard</h2>
+		<h2>Salmonberry</h2>
 		<hr/>
 		<pre>{{content}}</pre>
 		<form action='?' method='get'>
@@ -38,16 +38,30 @@
 	</body>
 	<script type="text/javascript">
 		window.addEventListener('keydown', (e) => {
-			if(e.key == "ArrowLeft") { window.location.href = "?input=L"; }
-			if(e.key == "ArrowRight") { window.location.href = "?input=R"; }
-			if(e.key == "ArrowUp") { window.location.href = "?input=U"; }
-			if(e.key == "ArrowDown") { window.location.href = "?input=D"; }
-			if(e.key == "w") { window.location.href = "?input=U"; }
-			if(e.key == "a") { window.location.href = "?input=L"; }
-			if(e.key == "s") { window.location.href = "?input=D"; }
-			if(e.key == "d") { window.location.href = "?input=R"; }
+			switch(e.key) {
+				case "ArrowLeft": qs("L"); break;
+				case "ArrowRight": qs("R"); break;
+				case "ArrowUp": qs("U"); break;
+				case "ArrowDown": qs("D"); break;
+				case "w": qs("U"); break;
+				case "a": qs("L"); break;
+				case "s": qs("D"); break;
+				case "d": qs("R"); break;
+			}
 		});
 
+		function qs(dir) {
+			window.location.href = "?input=" + dir;
+		}
 
+		function getPath() {
+			return ("" + window.location.href).split("?")[0];
+		}
+
+		function reload() {
+			window.location.href = getPath();
+		}
+
+		//setTimeout(reload, 1000);
 	</script>
 </html>
