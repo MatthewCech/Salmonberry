@@ -85,27 +85,27 @@ public class WebApp extends NanoHTTPD
 		Map<String, List<String>> params = session.getParameters();
 		String defautPage = "index.html";
 		
-		
-		
-		if(params.isEmpty() && pages.containsKey(defautPage))
-		{
-			String out = "";
-			for(Supplier<String> supplier : onDeliverIndex)
-			{
-				out += supplier.get();
-			}
-			
-			return newFixedLengthResponse(pages.get(defautPage).replace("{{content}}", out));
-		}
-		else
+		// Get input parameter for now just for testing
+		if(params.get("input") != null)
 		{
 			for(Consumer<String> consumer : onMessage)
 			{
-				// Get input parameter for now just for testing
-				consumer.accept(params.get("input") != null ? params.get("input").get(0) : null);
+				String input = params.get("input").get(0);
+				Note.Log("Input found, was: '" + input + "'");
+				consumer.accept(input);
 			}
 		}
 		
-		return newFixedLengthResponse("{}");
+		// Form output after handling all inputs and things
+		String out = "";
+		for(Supplier<String> supplier : onDeliverIndex)
+		{
+			out += supplier.get();
+		}
+		
+		return newFixedLengthResponse(pages.get(defautPage).replace("{{content}}", out));
+		
+		
+		//return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", "{}");
 	}
 }

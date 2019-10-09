@@ -11,11 +11,29 @@
 		body {
 			font-family: monospace;
 		}
+		.s-btn {
+			width: 30px;
+			margin: 1px;
+		}
+		.s-btn-group {
+			text-align: center;
+			width: 100px;
+		}
 	</style>
 
 	<body>
 		<h2>Salmonberry Sever Dashboard</h2>
 		<hr/>
 		<pre>{{content}}</pre>
+		<form action='?' method='get'>
+			<div class="s-btn-group">
+				<input class="s-btn" type="submit" name="input" value="U" onClick="submit">
+				<br/>
+				<input class="s-btn" type="submit" name="input" value="L" onClick="submit">
+				<input class="s-btn" type="submit" name="input" value="R" onClick="submit">
+				<br/>
+				<input class="s-btn" type="submit" name="input" value="D" onClick="submit">
+			</div>
+		</form>
 	</body>
 </html>

@@ -37,6 +37,21 @@ public class MapSlice
 		}
 	}
 	
+	public MapSlice clone()
+	{
+		MapSlice slice = new MapSlice(width, height);
+		
+		for(int y = 0; y < height; ++y)
+		{
+			for(int x = 0; x < width; ++x)
+			{
+				slice.set(x, y, get(x, y));
+			}
+		}
+		
+		return slice;
+	}
+	
 	public int getWidth()
 	{
 		return width;
