@@ -11,7 +11,7 @@ import core.Note;
 public class MapSlice
 {
 	// Variables
-	public static final String empty = " "; 
+	public static final String empty = "."; 
 	
 	private int width;
 	private int height;
@@ -33,7 +33,7 @@ public class MapSlice
 				item.add(empty);
 			}
 			
-			map.add(new ArrayList<String>());
+			map.add(item);
 		}
 	}
 	
@@ -53,6 +53,24 @@ public class MapSlice
 			return null;
 		
 		return map.get(y).get(x);
+	}
+	
+	@Override
+	public String toString()
+	{
+		String out = "";
+
+		for(int y = 0; y < height; ++y)
+		{
+			for(int x = 0; x < width; ++x)
+			{
+				out += get(x, y);
+			}
+			
+			out += "\n";
+		}
+		
+		return out;
 	}
 	
 	public void set(int x, int y, String newValue)
