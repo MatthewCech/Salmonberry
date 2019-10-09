@@ -1,12 +1,12 @@
-package core.server;
+package server;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
+import core.Note;
 import fi.iki.elonen.NanoHTTPD;
-import util.Note;
 
 public class WebApp extends NanoHTTPD
 {

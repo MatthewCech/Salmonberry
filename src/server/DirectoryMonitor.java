@@ -1,4 +1,4 @@
-package core.server;
+package server;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import util.Note;
+import core.Note;
 
 
 public class DirectoryMonitor

@@ -1,10 +1,10 @@
 package core;
 
-import core.server.WebApp;
+import server.WebApp;
 
 public class Main
 {
-	static WebApp salmonberry;
+	private static WebApp salmonberry;
 	
 	public static void main(String[] args)
 	{
