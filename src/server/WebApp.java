@@ -94,7 +94,7 @@ public class WebApp extends NanoHTTPD
 			{
 				String input = params.get("input").get(0);
 				String id = params.get("id").get(0);
-				String icon = params.get("icon").get(0);
+				String icon = "" + id.toUpperCase().charAt(0);
 				
 				Note.Log("Input found, was: '" + input + "'");
 				consumer.accept(new EventInput(id, icon, input));

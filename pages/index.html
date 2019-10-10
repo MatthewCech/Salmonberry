@@ -25,7 +25,7 @@
 	<body>
 		<div style="max-width: 600px; margin-left: auto; margin-right: auto;">
 		<h2>Salmonberry</h2>
-		<p>Forced refresh ticks happen once username and symbol are selected.</p>
+		<p id="s-ref" style="display: none;">Refresh tick rate currently every: <code style="color: rgb(120,80,255)">1000</code> ms</p>
 		<hr/>
 		<pre id="s-pre" style="text-align: center; display: none;">{{content}}</pre>
 		<br/>
@@ -48,7 +48,7 @@
 			</form>
 		</div>
 		<div id="s-r-r" style="float: right; display: none;">
-			<button onClick="reload();">Reload</button> - <button onClick="reset();">Reset</button>
+			<button onClick="reload();">Reload</button> - <button onClick="reset();">Exit</button>
 		</div>
 		</div>
 
@@ -68,7 +68,7 @@
 			});
 
 			function qs(dir) {
-				window.location.href = "?input=" + dir + "&id=" + document.getElementById('s-id').value + "&icon=" + document.getElementById('s-icon').value;
+				window.location.href = "?input=" + dir + "&id=" + document.getElementById('s-id').value;
 			}
 
 			// From https://davidwalsh.name/query-string-javascript
@@ -121,6 +121,8 @@
 				document.getElementById('s-b-r').style.display = "initial";
 				document.getElementById('s-pre').style.display = "initial";
 				document.getElementById('s-r-r').style.display = "initial";
+				document.getElementById('s-ref').style.display = "initial";
+
 				canInput = true;
 
 				document.getElementById('s-create').style.display = "none";

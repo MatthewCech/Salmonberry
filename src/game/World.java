@@ -29,6 +29,8 @@ public class World
 		this.slice = new MapSlice(defaultWidth, defaultHeight);
 		this.players = new ArrayList<Pair<Player, Point>>();
 		this.eventsQueue = new ArrayList<QueuedEvent>();
+		
+		Note.Log("CONSTRUCTOR");
 	}
 	
 	private Pair<Player, Point> getPlayerPair(String id)
@@ -37,9 +39,10 @@ public class World
 		
 		for(Pair<Player, Point> p : players)
 		{
-			if(p.first.getID() == id);
+			Note.Log("ID checking: " + p.first.getID());
+			if(p.first.getID().equalsIgnoreCase(id))
 			{
-				Note.Log("Found " + id);
+				Note.Log("Found " + id + "" + players.size());
 				player = p;
 				break;
 			}
@@ -98,7 +101,7 @@ public class World
 			Event event = data.getEvent();
 			if(event instanceof EventInput)
 			{
-				Pair<Player, Point> player = getPlayerPair(data.getPlayerID());
+				Pair<Player, Point> player = getPlayerPair(event.getID());
 				
 				switch(((EventInput)event).input)
 				{
