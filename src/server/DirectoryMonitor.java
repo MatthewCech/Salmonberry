@@ -62,12 +62,16 @@ public class DirectoryMonitor
 	public boolean update() 
 	{
 		boolean updated = false;
-		
+
 		try
 		{
-			WatchKey key = watcher.take();
-			Path dir = monitored.get(key);
+			WatchKey key = watcher.poll();
+			if(key == null)
+			{
+				return false;
+			}
 			
+			Path dir = monitored.get(key);
 			if (dir == null)
 			{
 				Note.Warn("WatchKey was not found");

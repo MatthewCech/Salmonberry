@@ -17,7 +17,7 @@
 		}
 		.s-btn-group {
 			text-align: center;
-			width: 280px;
+			width: 300px;
 			float: left;
 		}
 	</style>
@@ -26,14 +26,14 @@
 		<div style="max-width: 600px; margin-left: auto; margin-right: auto;">
 		<h2>Salmonberry</h2>
 		<hr/>
-		<pre style="text-align: center;">{{content}}</pre>
+		<pre id="s-pre" style="text-align: center; display: none;">{{content}}</pre>
 		<br/>
 		<hr/>
 		<div class="s-btn-group">
 			<form action='?' method='get'>
 					ID: <input id="s-id" class="s-btn" type="input" name="id" required>
-					Icon: <input id="s-icon" class="s-btn" type="input" name="icon" required>
-					<button id="s-create">Create at 0,0</button>
+					Symbol: <input id="s-icon" class="s-btn" type="input" name="icon" required pattern=".">
+					<button id="s-create">Create (upper left)</button>
 					<br/>
 					<br/>
 					<input id="s-b-u" class="s-btn" type="button" name="input" value="U" onClick="qs('U');" style="display: none;">
@@ -46,7 +46,7 @@
 					<input id="s-b-d" class="s-btn" type="button" name="input" value="D" onClick="qs('D');" style="display: none;">
 			</form>
 		</div>
-		<div style="float: right;">
+		<div id="s-r-r" style="float: right; display: none;">
 			<button onClick="reload();">Reload</button> - <button onClick="reset();">Reset</button>
 		</div>
 		</div>
@@ -122,6 +122,9 @@
 				document.getElementById('s-b-d').style.display = "initial";
 				document.getElementById('s-b-l').style.display = "initial";
 				document.getElementById('s-b-r').style.display = "initial";
+
+				document.getElementById('s-pre').style.display = "initial";
+				document.getElementById('s-r-r').style.display = "initial";
 				canInput = true;
 
 				document.getElementById('s-create').style.display = "none";
