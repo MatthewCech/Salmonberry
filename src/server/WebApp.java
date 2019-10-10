@@ -10,6 +10,8 @@ import java.util.function.Supplier;
 
 import core.Note;
 import fi.iki.elonen.NanoHTTPD;
+import game.events.Event;
+import game.events.EventInput;
 
 public class WebApp extends NanoHTTPD
 {
@@ -17,7 +19,7 @@ public class WebApp extends NanoHTTPD
 	private Map<String, String> pages;
 	private DirectoryMonitor monitor;
 	private List<Supplier<String>> onDeliverIndex;
-	private List<Consumer<String>> onMessage;
+	private List<Consumer<Event>> onMessage;
 	
 	// Constructor
 	public WebApp()
@@ -25,7 +27,7 @@ public class WebApp extends NanoHTTPD
 		super(8080);
 	
 		this.onDeliverIndex = new ArrayList<Supplier<String>>();
-		this.onMessage = new ArrayList<Consumer<String>>();
+		this.onMessage = new ArrayList<Consumer<Event>>();
 		
 		try
 		{
@@ -52,7 +54,7 @@ public class WebApp extends NanoHTTPD
 	}
 	
 	// All called and concatinated when homepage is out
-	public void OUT_registerOnMessage(Consumer<String> callback)
+	public void OUT_registerOnMessage(Consumer<Event> callback)
 	{
 		onMessage.add(callback);
 	}
@@ -88,11 +90,14 @@ public class WebApp extends NanoHTTPD
 		// Get input parameter for now just for testing
 		if(params.get("input") != null)
 		{
-			for(Consumer<String> consumer : onMessage)
+			for(Consumer<Event> consumer : onMessage)
 			{
 				String input = params.get("input").get(0);
+				String id = params.get("id").get(0);
+				String icon = params.get("icon").get(0);
+				
 				Note.Log("Input found, was: '" + input + "'");
-				consumer.accept(input);
+				consumer.accept(new EventInput(id, icon, input));
 			}
 		}
 		

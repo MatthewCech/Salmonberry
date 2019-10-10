@@ -2,14 +2,17 @@ package game;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 import core.Note;
 import core.Pair;
+import game.events.Event;
+import game.events.EventInput;
+import game.events.QueuedEvent;
 
 public class World
 {
 	// Variables
-	public final String testID = "test123";
 	public final int defaultWidth = 60;
 	public final int defaultHeight = 20;
 	
@@ -18,16 +21,14 @@ public class World
 	public List<Pair<Player, Point>> players;
 	
 	// Event queue
-	public List<EventData> eventsQueue;
+	public List<QueuedEvent> eventsQueue;
 	
 	// Constructor
 	public World()
 	{
 		this.slice = new MapSlice(defaultWidth, defaultHeight);
 		this.players = new ArrayList<Pair<Player, Point>>();
-		this.eventsQueue = new ArrayList<EventData>();
-		
-		players.add(new Pair<Player, Point>(new Player(testID, "@"), new Point(5, 5)));
+		this.eventsQueue = new ArrayList<QueuedEvent>();
 	}
 	
 	private Pair<Player, Point> getPlayerPair(String id)
@@ -38,6 +39,7 @@ public class World
 		{
 			if(p.first.getID() == id);
 			{
+				Note.Log("Found " + id);
 				player = p;
 				break;
 			}
@@ -47,35 +49,38 @@ public class World
 	}
 	
 	// Testing input stub for player
-	public void inputStub(String inputRaw)
+	public void inputStub(Event event)
 	{
 		long time = System.currentTimeMillis();
-		String input = inputRaw.trim().toLowerCase();
-		String id = testID;
-		Pair<Player, Point> player = getPlayerPair(id);
+		Pair<Player, Point> player = getPlayerPair(event.getID());
 		
 		if(player == null)
 		{
-			Note.Warn("Could not find player with ID '" + id + "'");
+			Note.Log("Could not find player with ID '" + event.getID() + "' - making player");
+			
+			players.add(
+					new Pair<Player, Point>(
+							new Player(((EventInput)event).id, ((EventInput)event).icon),
+							new Point(1,1)));
 			return;
 		}
 		
 		synchronized(eventsQueue)
 		{
-			eventsQueue.add(new EventData(time, input, player.first));
+			eventsQueue.add(new QueuedEvent(time, event, player.first));
 		}
 	}
 	
-	// Update
+	// Updates the world, and returns if it was successful or not.
+	// First, pop off all events quickly so the queue can be filled elsewhere.
+	// Then, in whatever order we've chosen (we could sort by time, for example) process events for the world.
 	public boolean update()
 	{
-		
-		// First, pop off all events quickly so the queue can be filled elsewhere.
-		List<EventData> toProcess = new ArrayList<EventData>();
+		List<QueuedEvent> toProcess = new ArrayList<QueuedEvent>();
 		
 		synchronized(eventsQueue)
 		{
-			for(EventData data : eventsQueue)
+			for(QueuedEvent data : eventsQueue)
 			{
 				toProcess.add(data);
 			}
@@ -88,17 +93,20 @@ public class World
 			Note.Log("Found some events to process: " + toProcess.size());
 		}
 		
-		// In whatever order we've chosen (we could sort by time, for example) process input events for the world.
-		
-		for(EventData data : toProcess)
+		for(QueuedEvent data : toProcess)
 		{
-			Pair<Player, Point> player = getPlayerPair(data.getPlayerID());
-			switch(data.getData())
+			Event event = data.getEvent();
+			if(event instanceof EventInput)
 			{
-				case "u": player.second.y -= 1; break;
-				case "d": player.second.y += 1; break;
-				case "l": player.second.x -= 1; break;
-				case "r": player.second.x += 1; break;
+				Pair<Player, Point> player = getPlayerPair(data.getPlayerID());
+				
+				switch(((EventInput)event).input)
+				{
+					case "u": player.second.y -= 1; break;
+					case "d": player.second.y += 1; break;
+					case "l": player.second.x -= 1; break;
+					case "r": player.second.x += 1; break;
+				}
 			}
 		}
 		

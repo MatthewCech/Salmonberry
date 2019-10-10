@@ -1,16 +1,18 @@
-package game;
+package game.events;
+
+import game.Player;
 
 // All the info about an event
-public class EventData
+public class QueuedEvent
 {
 	private long time;
-	private String data;
+	private Event event;
 	private Player player;
 	
-	public EventData(long time, String data, Player player)
+	public QueuedEvent(long time, Event event, Player player)
 	{
 		this.time = time;
-		this.data = data;
+		this.event = event;
 		this.player = player;
 	}
 	
@@ -19,9 +21,9 @@ public class EventData
 		return time;
 	}
 	
-	public String getData()
+	public Event getEvent()
 	{
-		return data;
+		return event;
 	}
 	
 	public String getPlayerID()

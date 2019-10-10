@@ -17,7 +17,7 @@
 		}
 		.s-btn-group {
 			text-align: center;
-			width: 300px;
+			width: 250px;
 			float: left;
 		}
 	</style>
@@ -25,15 +25,16 @@
 	<body>
 		<div style="max-width: 600px; margin-left: auto; margin-right: auto;">
 		<h2>Salmonberry</h2>
+		<p>Forced refresh ticks happen once username and symbol are selected.</p>
 		<hr/>
 		<pre id="s-pre" style="text-align: center; display: none;">{{content}}</pre>
 		<br/>
 		<hr/>
 		<div class="s-btn-group">
 			<form action='?' method='get'>
-					ID: <input id="s-id" class="s-btn" type="input" name="id" required>
-					Symbol: <input id="s-icon" class="s-btn" type="input" name="icon" required pattern=".">
-					<button id="s-create">Create (upper left)</button>
+					Username: <input id="s-id" class="s-btn" style="width: 100px" type="input" name="id" required>
+					<button id="s-create">Create</button>
+					<p id="s-txt">Once created, your icon will be the first letter of your username</p>
 					<br/>
 					<br/>
 					<input id="s-b-u" class="s-btn" type="button" name="input" value="U" onClick="qs('U');" style="display: none;">
@@ -106,28 +107,26 @@
 				window.location.href = window.location.href.split('?')[0];
 			}
 
-			//setTimeout(reload, 1000);
-
 			// Set-up code here
 			let id = getUrlParameter('id');
-			let icon = getUrlParameter('icon');
-			if(id && icon)
+			if(id)
 			{
 				document.getElementById('s-id').value = id;
 				document.getElementById('s-id').disabled = true;
-				document.getElementById('s-icon').value = icon;
-				document.getElementById('s-icon').disabled = true;
 
+				// Make this an "On Loaded" class and then just tweak the class itself.
 				document.getElementById('s-b-u').style.display = "initial";
 				document.getElementById('s-b-d').style.display = "initial";
 				document.getElementById('s-b-l').style.display = "initial";
 				document.getElementById('s-b-r').style.display = "initial";
-
 				document.getElementById('s-pre').style.display = "initial";
 				document.getElementById('s-r-r').style.display = "initial";
 				canInput = true;
 
 				document.getElementById('s-create').style.display = "none";
+				document.getElementById('s-txt').style.display = "none";
+
+				setTimeout(reload, 1000);
 			}
 		</script>
 	</body>

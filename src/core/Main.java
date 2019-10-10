@@ -24,8 +24,8 @@ public class Main
 		// Run application
 		while(true)
 		{
-			salmonberry.update();
 			world.update();
+			salmonberry.update();
 		}
 	}
 }
