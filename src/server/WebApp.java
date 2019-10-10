@@ -24,7 +24,7 @@ public class WebApp extends NanoHTTPD
 	// Constructor
 	public WebApp()
 	{
-		super(8080);
+		super(80);
 	
 		this.onDeliverIndex = new ArrayList<Supplier<String>>();
 		this.onMessage = new ArrayList<Consumer<Event>>();
