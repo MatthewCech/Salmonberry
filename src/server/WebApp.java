@@ -3,31 +3,43 @@ package server;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import core.Note;
 import fi.iki.elonen.NanoHTTPD;
 import game.events.Event;
+import game.events.EventCreate;
 import game.events.EventInput;
+import jdk.nashorn.internal.runtime.JSONFunctions;
 
 public class WebApp extends NanoHTTPD
 {
 	// Variables
+	public static final int port = 80;
 	private Map<String, String> pages;
 	private DirectoryMonitor monitor;
-	private List<Supplier<String>> onDeliverIndex;
-	private List<Consumer<Event>> onMessage;
+	private Supplier<String> onDeliverIndex;
+	private Map<String, Function<IHTTPSession, Response>> paths;
+	
+	// Outbound event
+	private List<Consumer<Event>> onEventInput;
+	private List<Consumer<Event>> onEventCreate;
 	
 	// Constructor
 	public WebApp()
 	{
-		super(80);
+		super(port);
 	
-		this.onDeliverIndex = new ArrayList<Supplier<String>>();
-		this.onMessage = new ArrayList<Consumer<Event>>();
+		this.onDeliverIndex = null;
+		this.paths = new HashMap<String, Function<IHTTPSession, Response>>();
+		this.onEventInput = new ArrayList<Consumer<Event>>();
+		this.onEventCreate = new ArrayList<Consumer<Event>>();
 		
 		try
 		{
@@ -39,7 +51,7 @@ public class WebApp extends NanoHTTPD
 			return;
 		}
 		
-		Note.Log("Running at http://localhost:8080/\n");
+		Note.Log("Running at http://localhost:" + port + "/\n");
 		
 		// Start up file manager
 		this.monitor = new DirectoryMonitor(Paths.get(DirectoryMonitor.defaultDir));
@@ -50,13 +62,19 @@ public class WebApp extends NanoHTTPD
 	// All called and concatinated when homepage is out
 	public void IN_registerOnDeliverIndex(Supplier<String> callback)
 	{
-		onDeliverIndex.add(callback);
+		onDeliverIndex = callback;
 	}
 	
 	// All called and concatinated when homepage is out
-	public void OUT_registerOnMessage(Consumer<Event> callback)
+	public void OUT_registerOnEventInput(Consumer<Event> callback)
 	{
-		onMessage.add(callback);
+		onEventInput.add(callback);
+	}
+	
+	// All called and concatinated when homepage is out
+	public void OUT_registerOnEventCreate(Consumer<Event> callback)
+	{
+		onEventCreate.add(callback);
 	}
 	
 	// The primary application loop for general functions. Returns true
@@ -84,13 +102,70 @@ public class WebApp extends NanoHTTPD
 	// This function is called when an HTTP request is recieved!
 	public Response serve(IHTTPSession session)
 	{
-		Map<String, List<String>> params = session.getParameters();
-		String defautPage = "index.html";
+		String uri = session.getUri();
+		Note.Log("URI Request: " + uri);
 		
+		if(paths.containsKey(uri))
+		{
+			return paths.get(uri).apply(session);
+		}
+		else
+		{
+			return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", "{}");
+		}
+	}
+	
+	public void bindPaths()
+	{
+		paths.put("/", this::path_);
+		paths.put("/create", this::path_create);
+	}
+	
+	// at a path of "/create"
+	private Response path_create(IHTTPSession session)
+	{
+		Map<String, List<String>> params = session.getParameters();
+		if(params.get("id") != null)
+		{
+			String res = "{ status: " + JSONFunctions.quote("ok") + "}";
+			String id = params.get("id").get(0);
+			
+			for(Consumer<Event> consumer : onEventCreate)
+			{
+				consumer.accept(new EventCreate(id));
+			}
+			
+			return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", res);
+		}
+		else
+		{
+			return newFailResponse("'id' should be specified as a request parameter.");
+		}
+	}
+	
+	private Response newFailResponse(String message)
+	{
+		String res = "{ status:\"fail\", message:" + JSONFunctions.quote(message) + "}"; 
+		return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", res); 
+	}
+	
+	// at a path of "/"
+	private Response path_(IHTTPSession session)
+	{
+		String defautPage = "index.html";
+	
+		// Form output after handling all inputs and things
+		String out = "";
+		if(onDeliverIndex != null)
+		{
+			out += onDeliverIndex.get();
+		}
+				
 		// Get input parameter for now just for testing
+		Map<String, List<String>> params = session.getParameters();
 		if(params.get("input") != null)
 		{
-			for(Consumer<Event> consumer : onMessage)
+			for(Consumer<Event> consumer : onEventInput)
 			{
 				String input = params.get("input").get(0);
 				String id = params.get("id").get(0);
@@ -101,16 +176,6 @@ public class WebApp extends NanoHTTPD
 			}
 		}
 		
-		// Form output after handling all inputs and things
-		String out = "";
-		for(Supplier<String> supplier : onDeliverIndex)
-		{
-			out += supplier.get();
-		}
-		
 		return newFixedLengthResponse(pages.get(defautPage).replace("{{content}}", out));
-		
-		
-		//return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", "{}");
 	}
 }

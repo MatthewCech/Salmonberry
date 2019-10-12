@@ -7,6 +7,7 @@ import java.util.Queue;
 import core.Note;
 import core.Pair;
 import game.events.Event;
+import game.events.EventCreate;
 import game.events.EventInput;
 import game.events.QueuedEvent;
 
@@ -51,8 +52,25 @@ public class World
 		return player;
 	}
 	
+	public void consumeEventCreate(Event event)
+	{
+		if(event instanceof EventCreate)
+		{
+			EventCreate data = (EventCreate)event;
+			
+			players.add(
+				new Pair<Player, Point>(
+					new Player(data.getID(), data.icon),
+					new Point(1,1)));
+		}
+		else
+		{
+			Note.Error("Consuming the 'Create' event didn't work!");
+		}
+	}
+	
 	// Testing input stub for player
-	public void inputStub(Event event)
+	public void consumeEventInput(Event event)
 	{
 		long time = System.currentTimeMillis();
 		Pair<Player, Point> player = getPlayerPair(event.getID());
@@ -61,10 +79,7 @@ public class World
 		{
 			Note.Log("Could not find player with ID '" + event.getID() + "' - making player");
 			
-			players.add(
-					new Pair<Player, Point>(
-							new Player(((EventInput)event).id, ((EventInput)event).icon),
-							new Point(1,1)));
+
 			return;
 		}
 		

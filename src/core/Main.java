@@ -6,7 +6,7 @@ import server.WebApp;
 public class Main
 {
 	// Variables
-	private static WebApp salmonberry;
+	private static WebApp webapp;
 	private static World world;
 	
 	
@@ -15,17 +15,19 @@ public class Main
 	{
 		// Construct components
 		world = new World();
-		salmonberry = new WebApp();
+		webapp = new WebApp();
 		
 		// Register events and startup info
-		salmonberry.IN_registerOnDeliverIndex(world::toString);
-		salmonberry.OUT_registerOnMessage(world::inputStub);
+		webapp.bindPaths();
+		webapp.IN_registerOnDeliverIndex(world::toString);
+		webapp.OUT_registerOnEventInput(world::consumeEventInput);
+		webapp.OUT_registerOnEventCreate(world::consumeEventCreate);
 		
 		// Run application
 		while(true)
 		{
 			world.update();
-			salmonberry.update();
+			webapp.update();
 		}
 	}
 }
