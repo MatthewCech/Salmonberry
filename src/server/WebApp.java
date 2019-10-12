@@ -136,8 +136,8 @@ public class WebApp extends NanoHTTPD
 	// In the event of failure, standardize the failure message.
 	private Response newFailResponse(String message)
 	{
-		String res = "{ status:\"fail\", message:" + JSONFunctions.quote(message) + "}"; 
-		return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", res); 
+		String res = "{ \"status\":\"fail\", \"message\":" + JSONFunctions.quote(message) + "}"; 
+		return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "application/json", res); 
 	}
 	
 	
@@ -151,7 +151,7 @@ public class WebApp extends NanoHTTPD
 		Map<String, List<String>> params = session.getParameters();
 		if(params.get("id") != null)
 		{
-			String res = "{ status: " + JSONFunctions.quote("ok") + "}";
+			String res = "{ \"status\": " + JSONFunctions.quote("ok") + "}";
 			String id = params.get("id").get(0);
 			
 			for(Consumer<Event> consumer : onEventCreate)
@@ -159,7 +159,7 @@ public class WebApp extends NanoHTTPD
 				consumer.accept(new EventCreate(id));
 			}
 			
-			return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", res);
+			return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "application/json", res);
 		}
 		else
 		{
