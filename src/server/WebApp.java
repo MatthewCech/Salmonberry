@@ -180,14 +180,6 @@ public class WebApp extends NanoHTTPD
 		if(isOnDevMachine)
 		{
 			content = pages.get(defautPage);
-			if(isOnDevMachine)
-			{
-				content = content.replace("{{TARGET_ADDR}}", "127.0.0.1");			
-			}
-			else
-			{
-				content = content.replace("{{TARGET_ADDR}}", "salmonberry.info");
-			}
 		}
 		else
 		{
@@ -199,6 +191,15 @@ public class WebApp extends NanoHTTPD
 			{
 				Note.Error("Failed to load content from resources: " + e.toString());
 			}
+		}
+		
+		if(isOnDevMachine)
+		{
+			content = content.replace("{{TARGET_ADDR}}", "127.0.0.1");
+		}
+		else
+		{
+			content = content.replace("{{TARGET_ADDR}}", "salmonberry.info");
 		}
 		
 		// Return homepage
