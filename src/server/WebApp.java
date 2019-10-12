@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -175,14 +176,29 @@ public class WebApp extends NanoHTTPD
 	{
 		String defautPage = "index.html";
 		
-		String content = pages.get(defautPage);
+		String content = "";
 		if(isOnDevMachine)
 		{
-			content = content.replace("{{TARGET_ADDR}}", "127.0.0.1");			
+			content = pages.get(defautPage);
+			if(isOnDevMachine)
+			{
+				content = content.replace("{{TARGET_ADDR}}", "127.0.0.1");			
+			}
+			else
+			{
+				content = content.replace("{{TARGET_ADDR}}", "salmonberry.info");
+			}
 		}
 		else
 		{
-			content = content.replace("{{TARGET_ADDR}}", "salmonberry.info");
+			try
+			{
+				content = new String(WebApp.class.getResourceAsStream("/resources/index.html").readAllBytes());
+			}
+			catch (IOException e)
+			{
+				Note.Error("Failed to load content from resources: " + e.toString());
+			}
 		}
 		
 		// Return homepage

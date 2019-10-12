@@ -24,18 +24,26 @@ import core.Note;
 public class DirectoryMonitor
 {
 	// Variables
-	public static final String defaultDir = "./pages";
+	public static final String defaultDir = "./src/resources/";
 	private WatchService watcher;
 	private Map<WatchKey, Path> monitored;
 	private List<Path> files;
-	
+	private boolean isMonitoring;
 	
 	// Constructor - takes the directory to be monitored.
 	// This directory can not be changed after the fact.
 	public DirectoryMonitor(Path directoryToMonitor)
 	{
+		isMonitoring = false;
+		if(!directoryToMonitor.toFile().exists())
+		{
+			Note.Warn("The specified directory, " + directoryToMonitor.toString() + ", doesn't exist. No monitoring will happen.");
+			return;
+		}
+		
 		try
 		{
+			
 			this.watcher = FileSystems.getDefault().newWatchService();
 			this.monitored = new HashMap<WatchKey, Path>();
 			this.files = new ArrayList<Path>();
@@ -48,9 +56,11 @@ public class DirectoryMonitor
 					StandardWatchEventKinds.ENTRY_DELETE,
 					StandardWatchEventKinds.ENTRY_MODIFY);
 				
+			
 			monitored.put(key, directoryToMonitor);
 			
 			Note.Log("Monitor started for " + directoryToMonitor);
+			isMonitoring = true;
 		}
 		catch(Exception e)
 		{
@@ -61,6 +71,11 @@ public class DirectoryMonitor
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public boolean update() 
 	{
+		if(!isMonitoring)
+		{
+			return false;
+		}
+		
 		boolean updated = false;
 
 		try
@@ -167,6 +182,11 @@ public class DirectoryMonitor
 	{
 		Map<String, String> map = new HashMap<String, String>();
 		
+		if(!isMonitoring)
+		{
+			return map;
+		}
+		
 		try
 		{
 			for(Path path : files)
@@ -179,6 +199,7 @@ public class DirectoryMonitor
 		{
 			Note.Error("Exception during content reading " + e);
 		}
+		
 		return map;
 	}
 }
