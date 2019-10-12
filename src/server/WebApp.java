@@ -176,16 +176,9 @@ public class WebApp extends NanoHTTPD
 	private Response path_(IHTTPSession session)
 	{
 		String defautPage = "index.html";
-	
-		// Form output after handling all inputs and things
-		String out = "";
-		if(onDeliverIndex != null)
-		{
-			out += onDeliverIndex.get();
-		}
 		
 		// Return homepage
-		return newFixedLengthResponse(pages.get(defautPage).replace("{{content}}", out));
+		return newFixedLengthResponse(pages.get(defautPage));
 	}
 	
 	// at a path of "/create"

@@ -11,67 +11,121 @@
 		body {
 			font-family: monospace;
 		}
-		.s-btn {
-			width: 30px;
-			margin: 1px;
+
+		.small {
+			font-size: .8em;
 		}
-		.s-btn-group {
-			text-align: center;
-			width: 250px;
-			float: left;
+
+		.faded {
+			opacity: .3;
+			box-shadow: 0px 2px 4px rgba(0, 0, 0, .2);
+		}
+
+		.step-1 {
+
+		}
+
+		/* disabling toggle for step1 */
+		.step-1-disabler {
+
+		}
+
+		.step-2 {
+			display: none;
 		}
 	</style>
 
-	<body>
-		<div style="max-width: 600px; margin-left: auto; margin-right: auto;">
-		<h2>Salmonberry</h2>
-		<p>v 0.0.1</p>
-		<p>This version does not retain any information between runs</p>
-		<p id="s-ref" style="display: none;">Refresh tick rate currently every: <code style="color: rgb(120,80,255)">1000</code> ms</p>
 
-		<hr/>
-		<pre id="s-pre" style="text-align: center; display: none;">{{content}}</pre>
-		<br/>
-		<hr/>
-		<div class="s-btn-group">
+	<body>
+		<!-- STEP 1 -->
+		<div style="max-width: 600px; margin-left: auto; margin-right: auto;">
+		<h2 style="margin-bottom: 0px;">Salmonberry</h2>
+		<p class="small" style="margin-top: 0px;">
+			v0.0.2
+			<br/>This version does not retain any information between runs.
+			<br/>Refresh tick rate currently every: <u><code style="color: rgb(250, 125, 10)">1000</code></u> ms
+		</p>
+
+		<hr class="faded"/>
+		<p>
+			<input autocomplete="false" hidden></input>
+			Username: <input class="step-1 step-1-disabler" id="username" autocomplete="off" style="width: 150px" type="input" name="id"></input>
+			<button class="step-1 step-1-disabler" value="Join" onClick="resolveID();">Join</button> <button class="step-2" onClick="reset();">Exit</button>
+			<br/><span class="small">Once created, your icon will be the first letter of your Username</span>
+		</p>
+
+		<!-- STEP 2 -->
+		<div class="step-2">
 			<form action='?' method='get'>
-					Username: <input id="s-id" class="s-btn" style="width: 100px" type="input" name="id" required>
-					<button id="s-create">Join</button>
-					<p id="s-txt">Once created, your icon will be the first letter of your username</p>
-					<br/>
-					<br/>
-					<input id="s-b-u" class="s-btn" type="button" name="input" value="U" onClick="qs('U');" style="display: none;">
-					
-					<br/>
-					<input id="s-b-l" class="s-btn" type="button" name="input" value="L" onClick="qs('L');" style="display: none;">
-					<input id="s-b-r" class="s-btn" type="button" name="input" value="R" onClick="qs('R');" style="display: none;">
-					
-					<br/>
-					<input id="s-b-d" class="s-btn" type="button" name="input" value="D" onClick="qs('D');" style="display: none;">
+				<hr class="faded"/>
+				<br/>
+				<br/>
+				<input type="button" name="input" value="U" onClick="qs('U');" style="display: none;">
+				
+				<br/>
+				<input type="button" name="input" value="L" onClick="qs('L');" style="display: none;">
+				<input class="s-btn" type="button" name="input" value="R" onClick="qs('R');" style="display: none;">
+				
+				<br/>
+				<input class="s-btn" type="button" name="input" value="D" onClick="qs('D');" style="display: none;">
 			</form>
-		</div>
-		<div id="s-r-r" style="float: right; display: none;">
-			<button onClick="reload();">Reload</button> - <button onClick="reset();">Exit</button>
-		</div>
 		</div>
 
 
 		<!-- Page interactions -->
 		<script type="text/javascript">
-			let canInput = false;
+			let id = null;
+			let step = 1;
+
+			let bundle1 = document.getElementsByClassName("step-1");
+			let bundle1Disabler = document.getElementsByClassName("step-1-disabler");
+			let bundle2 = document.getElementsByClassName("step-2");
+
 			window.addEventListener('keydown', (e) => {
-				if(canInput) {
+				if(step > 1) {
 					switch(e.key) {
-						case "ArrowLeft": qs("L"); break;
-						case "ArrowRight": qs("R"); break;
-						case "ArrowUp": qs("U"); break;
-						case "ArrowDown": qs("D"); break;
+						case "ArrowLeft": sendInput("L"); break;
+						case "ArrowRight": sendInput("R"); break;
+						case "ArrowUp": sendInput("U"); break;
+						case "ArrowDown": sendInput("D"); break;
 					}
 				}
 			});
 
-			function qs(dir) {
-				window.location.href = "?input=" + dir + "&id=" + document.getElementById('s-id').value;
+			function setEnabled(target, isEnabled) {
+				for (i = 0; i < target.length; i++) {
+					if(isEnabled) {
+						target[i].disabled = false;
+					} else {
+						target[i].disabled = true;
+					}
+				}
+			}
+
+			function setVisibility(bundle, isVisible) {
+				for (i = 0; i < bundle.length; i++) {
+					if(isVisible) {
+						bundle[i].style.display = "inline";
+					} else {
+						bundle[i].style.display = "none";
+					}
+				}
+			}
+
+			function resolveID() {
+				let username = document.getElementById("username");
+
+				if(username.value.length >= 1)
+				{
+					id = "jam";
+					step++;
+					setVisibility(bundle2, true);
+					setEnabled(bundle1Disabler, false);
+				}
+			}
+
+			function sendInput() {
+
 			}
 
 			// From https://davidwalsh.name/query-string-javascript
@@ -108,30 +162,6 @@
 
 			function reset() {
 				window.location.href = window.location.href.split('?')[0];
-			}
-
-			// Set-up code here
-			let id = getUrlParameter('id');
-			if(id)
-			{
-				document.getElementById('s-id').value = id;
-				document.getElementById('s-id').disabled = true;
-
-				// Make this an "On Loaded" class and then just tweak the class itself.
-				document.getElementById('s-b-u').style.display = "initial";
-				document.getElementById('s-b-d').style.display = "initial";
-				document.getElementById('s-b-l').style.display = "initial";
-				document.getElementById('s-b-r').style.display = "initial";
-				document.getElementById('s-pre').style.display = "initial";
-				document.getElementById('s-r-r').style.display = "initial";
-				document.getElementById('s-ref').style.display = "initial";
-
-				canInput = true;
-
-				document.getElementById('s-create').style.display = "none";
-				document.getElementById('s-txt').style.display = "none";
-
-				setTimeout(reload, 1000);
 			}
 		</script>
 	</body>
