@@ -4,7 +4,7 @@ public class EventInput extends Event
 {
 	public final String input;
 	
-	public EventInput(String id, String icon, String input)
+	public EventInput(String id, String input)
 	{
 		super(id, input);
 		

@@ -23,6 +23,8 @@ public class World
 	
 	// Event queue
 	public List<QueuedEvent> eventsQueue;
+	public List<Runnable> onUpdateFinished; // Never cleared
+	public List<Runnable> onUpdateFinishedOnce; // Always cleared
 	
 	// Constructor
 	public World()
@@ -30,6 +32,8 @@ public class World
 		this.slice = new MapSlice(defaultWidth, defaultHeight);
 		this.players = new ArrayList<Pair<Player, Point>>();
 		this.eventsQueue = new ArrayList<QueuedEvent>();
+		this.onUpdateFinished = new ArrayList<Runnable>();
+		this.onUpdateFinishedOnce = new ArrayList<Runnable>();
 		
 		Note.Log("CONSTRUCTOR");
 	}
@@ -89,6 +93,25 @@ public class World
 		}
 	}
 	
+	// Happens right before the end of the update function, but before single-upate
+	// events. These are not discarded.
+	public void registerOnUpdateFinished(Runnable targetFunction)
+	{
+		if(targetFunction != null)
+		{
+			this.onUpdateFinished.add(targetFunction);
+		}
+	}
+	
+	// This happens at the very very end, AFTER RECURRING EVENTS.
+	public void registerOnUpdateFinishedOnce(Runnable targetFunction)
+	{
+		if(targetFunction != null)
+		{
+			this.onUpdateFinishedOnce.add(targetFunction);
+		}
+	}
+	
 	// Updates the world, and returns if it was successful or not.
 	// First, pop off all events quickly so the queue can be filled elsewhere.
 	// Then, in whatever order we've chosen (we could sort by time, for example) process events for the world.
@@ -128,13 +151,24 @@ public class World
 			}
 		}
 		
+		// Fire off events as necessary.
+		for(Runnable r : onUpdateFinished)
+		{
+			r.run();
+		}
+		
+		for(Runnable r : onUpdateFinishedOnce)
+		{
+			r.run();
+		}
+		onUpdateFinishedOnce.clear();
+		
 		return true;
 	}
 	
-	@Override
-	public String toString()
-	{
-		// Construct visual
+	// Constructs the world as an ASCII location
+	public String getWorldAsASCII()
+	{	
 		MapSlice visual = slice.clone();
 		for(Pair<Player, Point> p : players)
 		{
@@ -142,10 +176,16 @@ public class World
 			visual.set(loc.x, loc.y, p.first.getIcon());
 		}
 		
+		return visual.toString();
+	}
+	
+	@Override
+	public String toString()
+	{
 		// Write visual to string
 		String out = "";
 		out += "World state:\n\n";
-		out += visual.toString();
+		out += getWorldAsASCII();
 		
 		return out;
 	}

@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -26,8 +25,12 @@ public class WebApp extends NanoHTTPD
 	private DirectoryMonitor monitor;
 	private Map<String, Function<IHTTPSession, Response>> paths;
 	
+	// Don't speak of this
+	private Supplier<Object> superSecretLinkToForceCallRemoteUpdateFunction; 
+	
 	// Event related
 	private Supplier<String> onDeliverIndex;     // Input
+	private Supplier<String> onEndpointState;    // Input
 	private List<Consumer<Event>> onEventInput;  // Output
 	private List<Consumer<Event>> onEventCreate; // Output
 	
@@ -59,14 +62,26 @@ public class WebApp extends NanoHTTPD
 	}
 	
 	
-	  /////////////////////
-	 // Input Functions //
-	/////////////////////
+	  ///////////////////////
+	 // Message Functions //
+	///////////////////////
+	
+	// Binds an event that allows something to recieve a callback only once when updated.
+	public void BIND_theUpdateFunction(Supplier<Object> onUpdateOnce)
+	{
+		this.superSecretLinkToForceCallRemoteUpdateFunction = onUpdateOnce;
+	}
 	
 	// All called and concatinated when homepage is out
 	public void IN_registerOnDeliverIndex(Supplier<String> callback)
 	{
 		onDeliverIndex = callback;
+	}
+	
+	// All called and concatinated when homepage is out
+	public void IN_registerOnEndpointState(Supplier<String> callback)
+	{
+		onEndpointState = callback;
 	}
 	
 	// All called and concatinated when homepage is out
@@ -131,41 +146,31 @@ public class WebApp extends NanoHTTPD
 	{
 		paths.put("/", this::path_);
 		paths.put("/create", this::path_create);
+		paths.put("/state", this::path_state);
+		paths.put("/input", this::path_input);
 	}
 	
 	// In the event of failure, standardize the failure message.
 	private Response newFailResponse(String message)
 	{
-		String res = "{ \"status\":\"fail\", \"message\":" + JSONFunctions.quote(message) + "}"; 
+		String res = "{ \"status\":\"fail\", \"data\":" + JSONFunctions.quote(message) + "}"; 
 		return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "application/json", res); 
 	}
 	
+	// In the event of failure, standardize the failure message.
+	private Response newSuccessResponse()
+	{
+		return newSuccessResponse("");
+	}
+	private Response newSuccessResponse(String data)
+	{
+		String res = "{ \"status\":\"ok\", \"data\":" + JSONFunctions.quote(data) + "}"; 
+		return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "application/json", res); 
+	}
 	
 	  ///////////////////
 	 // Path Handling //
 	///////////////////
-	
-	// at a path of "/create"
-	private Response path_create(IHTTPSession session)
-	{
-		Map<String, List<String>> params = session.getParameters();
-		if(params.get("id") != null)
-		{
-			String res = "{ \"status\": " + JSONFunctions.quote("ok") + "}";
-			String id = params.get("id").get(0);
-			
-			for(Consumer<Event> consumer : onEventCreate)
-			{
-				consumer.accept(new EventCreate(id));
-			}
-			
-			return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "application/json", res);
-		}
-		else
-		{
-			return newFailResponse("'id' should be specified as a request parameter.");
-		}
-	}
 	
 	// at a path of "/"
 	private Response path_(IHTTPSession session)
@@ -178,23 +183,63 @@ public class WebApp extends NanoHTTPD
 		{
 			out += onDeliverIndex.get();
 		}
-				
-		// Get input parameter for now just for testing
+		
+		// Return homepage
+		return newFixedLengthResponse(pages.get(defautPage).replace("{{content}}", out));
+	}
+	
+	// at a path of "/create"
+	private Response path_create(IHTTPSession session)
+	{
 		Map<String, List<String>> params = session.getParameters();
-		if(params.get("input") != null)
+		if(params.get("id") != null)
+		{
+			String id = params.get("id").get(0);
+			
+			for(Consumer<Event> consumer : onEventCreate)
+			{
+				consumer.accept(new EventCreate(id));
+			}
+			
+			return newSuccessResponse();
+		}
+		else
+		{
+			return newFailResponse("'id' should be specified as a request parameter.");
+		}
+	}
+	
+	// at a path of "/state"
+	private Response path_state(IHTTPSession session)
+	{
+		return newSuccessResponse(onEndpointState.get());
+	}
+	
+	// at a path of "/input"
+	private Response path_input(IHTTPSession session)
+	{
+		// Searches for and requires an input to be sent. 
+		Map<String, List<String>> params = session.getParameters();
+		if(params.get("input") != null && params.get("id") != null)
 		{
 			for(Consumer<Event> consumer : onEventInput)
 			{
 				String input = params.get("input").get(0);
 				String id = params.get("id").get(0);
-				String icon = "" + id.toUpperCase().charAt(0);
 				
 				Note.Log("Input found, was: '" + input + "'");
-				consumer.accept(new EventInput(id, icon, input));
+				consumer.accept(new EventInput(id, input));
 			}
 		}
+		else
+		{
+			return newFailResponse("Both the 'id' and 'input' parameters are required.");
+		}
 		
-		// Return homepage
-		return newFixedLengthResponse(pages.get(defautPage).replace("{{content}}", out));
+		// For now, force-update
+		superSecretLinkToForceCallRemoteUpdateFunction.get();
+		
+		// Return world
+		return newSuccessResponse(onEndpointState.get());
 	}
 }
