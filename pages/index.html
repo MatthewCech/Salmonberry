@@ -74,13 +74,17 @@
 
 		<!-- Page interactions -->
 		<script type="text/javascript">
+
+			// Variables
 			let id = null;
 			let step = 1;
 
-			let bundle1 = document.getElementsByClassName("step-1");
-			let bundle1Disabler = document.getElementsByClassName("step-1-disabler");
-			let bundle2 = document.getElementsByClassName("step-2");
+			// Groups
+			let bundle1 = document.getElementsByClassName("step-1"); // Section/Step 1
+			let bundle2 = document.getElementsByClassName("step-2"); // Section/Step 2
+			let bundle1Disabler = document.getElementsByClassName("step-1-disabler"); // Form elements with disabling for Section/Step 1
 
+			// Listeners
 			window.addEventListener('keydown', (e) => {
 				if(step > 1) {
 					switch(e.key) {
@@ -124,9 +128,31 @@
 				}
 			}
 
-			function sendInput() {
-
+			function reset() {
+				window.location.href = window.location.href.split('?')[0];
 			}
+
+
+			  //////////////////////////////////
+			 // Requests to send and whatnot //
+			//////////////////////////////////
+
+			function sendEventState() {
+				// REQUEST
+			}
+
+			function sendEventCreate() {
+				// REQUEST
+			}
+
+			function sendInput() {
+				// REQUEST
+			}
+
+
+			  //////////////////////////////////////////
+			 // Helper functions from around the web //
+			//////////////////////////////////////////
 
 			// From https://davidwalsh.name/query-string-javascript
 			function getUrlParameter(name) {
@@ -154,14 +180,6 @@
 				}
 
 				return url;
-			}
-
-			function reload() {
-				window.location.href = removeURLParameter(window.location.href, "input");
-			}
-
-			function reset() {
-				window.location.href = window.location.href.split('?')[0];
 			}
 		</script>
 	</body>
