@@ -24,12 +24,12 @@ public class WebApp extends NanoHTTPD
 	public static final int port = 80;
 	private Map<String, String> pages;
 	private DirectoryMonitor monitor;
-	private Supplier<String> onDeliverIndex;
 	private Map<String, Function<IHTTPSession, Response>> paths;
 	
-	// Outbound event
-	private List<Consumer<Event>> onEventInput;
-	private List<Consumer<Event>> onEventCreate;
+	// Event related
+	private Supplier<String> onDeliverIndex;     // Input
+	private List<Consumer<Event>> onEventInput;  // Output
+	private List<Consumer<Event>> onEventCreate; // Output
 	
 	// Constructor
 	public WebApp()
@@ -58,7 +58,11 @@ public class WebApp extends NanoHTTPD
 		this.pages = monitor.getFileContents();
 	}
 	
-	// INPUT FUNC
+	
+	  /////////////////////
+	 // Input Functions //
+	/////////////////////
+	
 	// All called and concatinated when homepage is out
 	public void IN_registerOnDeliverIndex(Supplier<String> callback)
 	{
@@ -76,6 +80,11 @@ public class WebApp extends NanoHTTPD
 	{
 		onEventCreate.add(callback);
 	}
+	
+	
+	  //////////////////////////////////
+	 // General Management Functions //
+	//////////////////////////////////
 	
 	// The primary application loop for general functions. Returns true
 	// if it's operating normally, false if not.
@@ -115,11 +124,26 @@ public class WebApp extends NanoHTTPD
 		}
 	}
 	
+	// Hook up the various endpoints of the server so it can direct messages. 
+	// Note that paths are very literal - there's no leeway with the slashes,
+	// so even if /path is bound to, /path/ is not automatically bound to as well. 
 	public void bindPaths()
 	{
 		paths.put("/", this::path_);
 		paths.put("/create", this::path_create);
 	}
+	
+	// In the event of failure, standardize the failure message.
+	private Response newFailResponse(String message)
+	{
+		String res = "{ status:\"fail\", message:" + JSONFunctions.quote(message) + "}"; 
+		return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", res); 
+	}
+	
+	
+	  ///////////////////
+	 // Path Handling //
+	///////////////////
 	
 	// at a path of "/create"
 	private Response path_create(IHTTPSession session)
@@ -141,12 +165,6 @@ public class WebApp extends NanoHTTPD
 		{
 			return newFailResponse("'id' should be specified as a request parameter.");
 		}
-	}
-	
-	private Response newFailResponse(String message)
-	{
-		String res = "{ status:\"fail\", message:" + JSONFunctions.quote(message) + "}"; 
-		return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", res); 
 	}
 	
 	// at a path of "/"
@@ -176,6 +194,7 @@ public class WebApp extends NanoHTTPD
 			}
 		}
 		
+		// Return homepage
 		return newFixedLengthResponse(pages.get(defautPage).replace("{{content}}", out));
 	}
 }
