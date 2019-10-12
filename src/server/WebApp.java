@@ -1,5 +1,6 @@
 package server;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -24,12 +25,12 @@ public class WebApp extends NanoHTTPD
 	private Map<String, String> pages;
 	private DirectoryMonitor monitor;
 	private Map<String, Function<IHTTPSession, Response>> paths;
+	private boolean isOnDevMachine;
 	
 	// Don't speak of this
 	private Supplier<Object> superSecretLinkToForceCallRemoteUpdateFunction; 
 	
 	// Event related
-	private Supplier<String> onDeliverIndex;     // Input
 	private Supplier<String> onEndpointState;    // Input
 	private List<Consumer<Event>> onEventInput;  // Output
 	private List<Consumer<Event>> onEventCreate; // Output
@@ -39,10 +40,12 @@ public class WebApp extends NanoHTTPD
 	{
 		super(port);
 	
-		this.onDeliverIndex = null;
 		this.paths = new HashMap<String, Function<IHTTPSession, Response>>();
 		this.onEventInput = new ArrayList<Consumer<Event>>();
 		this.onEventCreate = new ArrayList<Consumer<Event>>();
+		
+		// This setup is using eclipse 
+		this.isOnDevMachine = new File("./.project").exists() || new File("./.classpath").exists();
 		
 		try
 		{
@@ -54,7 +57,8 @@ public class WebApp extends NanoHTTPD
 			return;
 		}
 		
-		Note.Log("Running at http://localhost:" + port + "/\n");
+		// Note which format we're running in
+		Note.Log("Running at http://localhost:" + port + "/\n\t" + (isOnDevMachine ? "(dev mode)" : "(release mode)") + "\n");
 		
 		// Start up file manager
 		this.monitor = new DirectoryMonitor(Paths.get(DirectoryMonitor.defaultDir));
@@ -70,12 +74,6 @@ public class WebApp extends NanoHTTPD
 	public void BIND_theUpdateFunction(Supplier<Object> onUpdateOnce)
 	{
 		this.superSecretLinkToForceCallRemoteUpdateFunction = onUpdateOnce;
-	}
-	
-	// All called and concatinated when homepage is out
-	public void IN_registerOnDeliverIndex(Supplier<String> callback)
-	{
-		onDeliverIndex = callback;
 	}
 	
 	// All called and concatinated when homepage is out
@@ -127,7 +125,6 @@ public class WebApp extends NanoHTTPD
 	public Response serve(IHTTPSession session)
 	{
 		String uri = session.getUri();
-		Note.Log("URI Request: " + uri);
 		
 		if(paths.containsKey(uri))
 		{
@@ -135,6 +132,7 @@ public class WebApp extends NanoHTTPD
 		}
 		else
 		{
+			Note.Warn("URI Requested that does not exist: " + uri);
 			return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", "{}");
 		}
 	}
@@ -177,8 +175,18 @@ public class WebApp extends NanoHTTPD
 	{
 		String defautPage = "index.html";
 		
+		String content = pages.get(defautPage);
+		if(isOnDevMachine)
+		{
+			content = content.replace("{{TARGET_ADDR}}", "127.0.0.1");			
+		}
+		else
+		{
+			content = content.replace("{{TARGET_ADDR}}", "salmonberry.info");
+		}
+		
 		// Return homepage
-		return newFixedLengthResponse(pages.get(defautPage));
+		return newFixedLengthResponse(content);
 	}
 	
 	// at a path of "/create"

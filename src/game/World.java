@@ -14,8 +14,8 @@ import game.events.QueuedEvent;
 public class World
 {
 	// Variables
-	public final int defaultWidth = 60;
-	public final int defaultHeight = 20;
+	public final int defaultWidth = 40;
+	public final int defaultHeight = 25;
 	
 	// Data
 	private MapSlice slice;
@@ -44,10 +44,8 @@ public class World
 		
 		for(Pair<Player, Point> p : players)
 		{
-			Note.Log("ID checking: " + p.first.getID());
 			if(p.first.getID().equalsIgnoreCase(id))
 			{
-				Note.Log("Found " + id + "" + players.size());
 				player = p;
 				break;
 			}
@@ -62,10 +60,19 @@ public class World
 		{
 			EventCreate data = (EventCreate)event;
 			
-			players.add(
-				new Pair<Player, Point>(
-					new Player(data.getID(), data.icon),
-					new Point(1,1)));
+			Pair<Player, Point> pair = getPlayerPair(data.getID());
+			if(pair == null)
+			{
+				players.add(
+						new Pair<Player, Point>(
+							new Player(data.getID(), data.icon), new Point(1,1)));
+				
+				Note.Log("Created new player with id '" + data.getID() + "' and icon '" + data.icon + "'");
+			}
+			else
+			{
+				Note.Log("Recieved requset for existing player with id '" + data.getID() + "' and icon '" + data.icon + "'");
+			}
 		}
 		else
 		{
@@ -143,10 +150,30 @@ public class World
 				
 				switch(((EventInput)event).input)
 				{
-					case "u": player.second.y -= 1; break;
-					case "d": player.second.y += 1; break;
-					case "l": player.second.x -= 1; break;
-					case "r": player.second.x += 1; break;
+					case "u": 
+						if(player.second.y > 0)
+						{
+							player.second.y -= 1;
+						}
+						break;
+					case "d": 
+						if(player.second.y < defaultHeight - 1)
+						{
+							player.second.y += 1;
+						}
+						break;
+					case "l":
+						if(player.second.x > 0)
+						{
+							player.second.x -= 1;
+						}
+						break;
+					case "r":
+						if(player.second.x < defaultWidth - 1)
+						{
+							player.second.x += 1;
+						}
+						break;
 				}
 			}
 		}

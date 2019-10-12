@@ -18,7 +18,6 @@ public class Main
 		
 		// Register events and startup info for webapp
 		webapp.bindPaths();
-		webapp.IN_registerOnDeliverIndex(world::toString);
 		webapp.IN_registerOnEndpointState(world::getWorldAsASCII);
 		webapp.OUT_registerOnEventInput(world::consumeEventInput);
 		webapp.OUT_registerOnEventCreate(world::consumeEventCreate);
