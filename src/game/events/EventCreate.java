@@ -1,13 +1,32 @@
 package game.events;
 
-public class EventCreate extends Event
+import game.api.IEvent;
+
+public class EventCreate implements IEvent
 {
-	public final String icon;
+	private final String id;
+	private final String icon;
 
 	public EventCreate(String id)
 	{
-		super(id, id);
-		
+		this.id = id;
 		this.icon = "" + id.trim().toUpperCase().charAt(0);
+	}
+
+	@Override
+	public String getID()
+	{
+		return id;
+	}
+
+	@Override
+	public String getData()
+	{
+		return id;
+	}
+	
+	public String getIcon()
+	{
+		return icon;
 	}
 }

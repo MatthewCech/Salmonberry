@@ -1,4 +1,4 @@
-package game;
+package game.impl;
 
 public class Point
 {

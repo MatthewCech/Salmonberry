@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +13,7 @@ import java.util.function.Supplier;
 
 import core.Note;
 import fi.iki.elonen.NanoHTTPD;
-import game.events.Event;
+import game.api.IEvent;
 import game.events.EventCreate;
 import game.events.EventInput;
 import jdk.nashorn.internal.runtime.JSONFunctions;
@@ -33,8 +32,8 @@ public class WebApp extends NanoHTTPD
 	
 	// Event related
 	private Supplier<String> onEndpointState;    // Input
-	private List<Consumer<Event>> onEventInput;  // Output
-	private List<Consumer<Event>> onEventCreate; // Output
+	private List<Consumer<IEvent>> onEventInput;  // Output
+	private List<Consumer<IEvent>> onEventCreate; // Output
 	
 	// Constructor
 	public WebApp()
@@ -42,8 +41,8 @@ public class WebApp extends NanoHTTPD
 		super(port);
 	
 		this.paths = new HashMap<String, Function<IHTTPSession, Response>>();
-		this.onEventInput = new ArrayList<Consumer<Event>>();
-		this.onEventCreate = new ArrayList<Consumer<Event>>();
+		this.onEventInput = new ArrayList<Consumer<IEvent>>();
+		this.onEventCreate = new ArrayList<Consumer<IEvent>>();
 		
 		// This setup is using eclipse 
 		this.isOnDevMachine = new File("./.project").exists() || new File("./.classpath").exists();
@@ -84,13 +83,13 @@ public class WebApp extends NanoHTTPD
 	}
 	
 	// All called and concatinated when homepage is out
-	public void OUT_registerOnEventInput(Consumer<Event> callback)
+	public void OUT_registerOnEventInput(Consumer<IEvent> callback)
 	{
 		onEventInput.add(callback);
 	}
 	
 	// All called and concatinated when homepage is out
-	public void OUT_registerOnEventCreate(Consumer<Event> callback)
+	public void OUT_registerOnEventCreate(Consumer<IEvent> callback)
 	{
 		onEventCreate.add(callback);
 	}
@@ -214,7 +213,7 @@ public class WebApp extends NanoHTTPD
 		{
 			String id = params.get("id").get(0);
 			
-			for(Consumer<Event> consumer : onEventCreate)
+			for(Consumer<IEvent> consumer : onEventCreate)
 			{
 				consumer.accept(new EventCreate(id));
 			}
@@ -240,7 +239,7 @@ public class WebApp extends NanoHTTPD
 		Map<String, List<String>> params = session.getParameters();
 		if(params.get("input") != null && params.get("id") != null)
 		{
-			for(Consumer<Event> consumer : onEventInput)
+			for(Consumer<IEvent> consumer : onEventInput)
 			{
 				String input = params.get("input").get(0);
 				String id = params.get("id").get(0);
@@ -254,10 +253,10 @@ public class WebApp extends NanoHTTPD
 			return newFailResponse("Both the 'id' and 'input' parameters are required.");
 		}
 		
-		// For now, force-update
+		// For now, force-update. This absolutely will be problematic in the future.
 		superSecretLinkToForceCallRemoteUpdateFunction.get();
 		
 		// Return world
-		return newSuccessResponse(onEndpointState.get());
+		return newSuccessResponse();
 	}
 }

@@ -1,16 +1,18 @@
-package game;
+package game.impl;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import core.Note;
 import core.Pair;
-import game.events.Event;
+import game.api.IEntity;
+import game.api.IEvent;
+import game.api.IWorld;
 import game.events.EventCreate;
 import game.events.EventInput;
 import game.events.QueuedEvent;
 
-public class World
+public class World implements IWorld
 {
 	// Variables
 	public final int defaultWidth = 40;
@@ -18,7 +20,7 @@ public class World
 	
 	// Data
 	private MapSlice slice;
-	public List<Pair<Player, Point>> players;
+	public List<Pair<IEntity, Point>> entities;
 	
 	// Event queue
 	public List<QueuedEvent> eventsQueue;
@@ -29,7 +31,7 @@ public class World
 	public World()
 	{
 		this.slice = new MapSlice(defaultWidth, defaultHeight);
-		this.players = new ArrayList<Pair<Player, Point>>();
+		this.entities = new ArrayList<Pair<IEntity, Point>>();
 		this.eventsQueue = new ArrayList<QueuedEvent>();
 		this.onUpdateFinished = new ArrayList<Runnable>();
 		this.onUpdateFinishedOnce = new ArrayList<Runnable>();
@@ -37,11 +39,11 @@ public class World
 		Note.Log("CONSTRUCTOR");
 	}
 	
-	private Pair<Player, Point> getPlayerPair(String id)
+	private Pair<IEntity, Point> getEntityPair(String id)
 	{
-		Pair<Player, Point> player = null;
+		Pair<IEntity, Point> player = null;
 		
-		for(Pair<Player, Point> p : players)
+		for(Pair<IEntity, Point> p : entities)
 		{
 			if(p.first.getID().equalsIgnoreCase(id))
 			{
@@ -53,24 +55,24 @@ public class World
 		return player;
 	}
 	
-	public void consumeEventCreate(Event event)
+	public void consumeEventCreate(IEvent event)
 	{
 		if(event instanceof EventCreate)
 		{
 			EventCreate data = (EventCreate)event;
 			
-			Pair<Player, Point> pair = getPlayerPair(data.getID());
+			Pair<IEntity, Point> pair = getEntityPair(data.getID());
 			if(pair == null)
 			{
-				players.add(
-						new Pair<Player, Point>(
-							new Player(data.getID(), data.icon), new Point(1,1)));
+				entities.add(
+						new Pair<IEntity, Point>(
+							new Player(data.getID(), data.getIcon()), new Point(1,1)));
 				
-				Note.Log("Created new player with id '" + data.getID() + "' and icon '" + data.icon + "'");
+				Note.Log("Created new player with id '" + data.getID() + "' and icon '" + data.getIcon() + "'");
 			}
 			else
 			{
-				Note.Log("Recieved requset for existing player with id '" + data.getID() + "' and icon '" + data.icon + "'");
+				Note.Log("Recieved requset for existing player with id '" + data.getID() + "' and icon '" + data.getIcon() + "'");
 			}
 		}
 		else
@@ -80,23 +82,17 @@ public class World
 	}
 	
 	// Testing input stub for player
-	public void consumeEventInput(Event event)
+	public void consumeEventInput(IEvent event)
 	{
-		long time = System.currentTimeMillis();
-		Pair<Player, Point> player = getPlayerPair(event.getID());
+		Pair<IEntity, Point> entity = getEntityPair(event.getID());
 		
-		if(player == null)
+		if(entity == null)
 		{
-			Note.Log("Could not find player with ID '" + event.getID() + "' - making player");
-			
-
+			Note.Log("Could not find entity with ID '" + event.getID());
 			return;
 		}
 		
-		synchronized(eventsQueue)
-		{
-			eventsQueue.add(new QueuedEvent(time, event, player.first));
-		}
+		QueueEvent(event);
 	}
 	
 	// Happens right before the end of the update function, but before single-upate
@@ -142,12 +138,12 @@ public class World
 		
 		for(QueuedEvent data : toProcess)
 		{
-			Event event = data.getEvent();
+			IEvent event = data.getEvent();
 			if(event instanceof EventInput)
 			{
-				Pair<Player, Point> player = getPlayerPair(event.getID());
+				Pair<IEntity, Point> player = getEntityPair(event.getID());
 				
-				switch(((EventInput)event).input)
+				switch(((EventInput)event).getData())
 				{
 					case "u": 
 						if(player.second.y > 0)
@@ -196,10 +192,10 @@ public class World
 	public String getWorldAsASCII()
 	{	
 		MapSlice visual = slice.clone();
-		for(Pair<Player, Point> p : players)
+		for(Pair<IEntity, Point> p : entities)
 		{
 			Point loc = p.second;
-			visual.set(loc.x, loc.y, p.first.getIcon());
+			visual.set(loc.x, loc.y, p.first.getASCII());
 		}
 		
 		return visual.toString();
@@ -214,5 +210,14 @@ public class World
 		out += getWorldAsASCII();
 		
 		return out;
+	}
+
+	@Override
+	public void QueueEvent(IEvent event)
+	{
+		synchronized(eventsQueue)
+		{
+			eventsQueue.add(new QueuedEvent(System.currentTimeMillis(), event, getEntityPair(event.getID()).first));
+		}
 	}
 }

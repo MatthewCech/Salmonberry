@@ -43,6 +43,14 @@
 		}
 
 		.controlbutton{
+			-webkit-touch-callout: none;
+			-webkit-user-select: none; 
+			-khtml-user-select: none;
+			-moz-user-select: none; 
+			-ms-user-select: none; 
+			-o-user-select: none;
+			user-select: none;
+
 			width: 35px;
 			height: 35px;
 			border-radius: 5px;
@@ -90,7 +98,7 @@
 			// Variables
 			let id = null;
 			let step = 1;
-			const activeTickTime = 333;
+			const activeTickTime = 250;
 			const idleTickTime = 2000;
 
 			// Groups
@@ -192,7 +200,7 @@
 				sendRequest("input?id=" + id + "&input=" + input,
 					function() { 
 					    console.log("Successfully sent input '" + input + "' for ID: " + id);
-						drawState(this.responseText);
+						sendEventState();
 				    },
 					(err) => {
 						console.log("Error sending create request!"); 

@@ -1,6 +1,6 @@
 package core;
 
-import game.World;
+import game.impl.World;
 import server.WebApp;
 
 public class Main

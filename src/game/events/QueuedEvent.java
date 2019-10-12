@@ -1,19 +1,20 @@
 package game.events;
 
-import game.Player;
+import game.api.IEntity;
+import game.api.IEvent;
 
 // All the info about an event
 public class QueuedEvent
 {
 	private long time;
-	private Event event;
-	private Player player;
+	private IEvent event;
+	private IEntity entity;
 	
-	public QueuedEvent(long time, Event event, Player player)
+	public QueuedEvent(long time, IEvent event, IEntity entity)
 	{
 		this.time = time;
 		this.event = event;
-		this.player = player;
+		this.entity = entity;
 	}
 	
 	public long getTime()
@@ -21,13 +22,13 @@ public class QueuedEvent
 		return time;
 	}
 	
-	public Event getEvent()
+	public IEvent getEvent()
 	{
 		return event;
 	}
 	
-	public String getPlayerID()
+	public String getEntityID()
 	{
-		return player.getID();
+		return entity.getID();
 	}
 }
