@@ -92,7 +92,7 @@ public class World implements IWorld
 			return;
 		}
 		
-		QueueEvent(event);
+		queueEvent(event);
 	}
 	
 	// Happens right before the end of the update function, but before single-upate
@@ -213,7 +213,7 @@ public class World implements IWorld
 	}
 
 	@Override
-	public void QueueEvent(IEvent event)
+	public void queueEvent(IEvent event)
 	{
 		synchronized(eventsQueue)
 		{
