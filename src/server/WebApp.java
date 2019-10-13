@@ -169,7 +169,7 @@ public class WebApp extends NanoHTTPD
 	  ///////////////////
 	 // Path Handling //
 	///////////////////
-	
+
 	// at a path of "/"
 	private Response path_(IHTTPSession session)
 	{
