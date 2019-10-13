@@ -229,6 +229,7 @@ public class WebApp extends NanoHTTPD
 	// at a path of "/state"
 	private Response path_state(IHTTPSession session)
 	{
+		// Nothing is done with the id param at this point
 		return newSuccessResponse(onEndpointState.get());
 	}
 	
@@ -244,7 +245,6 @@ public class WebApp extends NanoHTTPD
 				String input = params.get("input").get(0);
 				String id = params.get("id").get(0);
 				
-				Note.Log("Input found, was: '" + input + "'");
 				consumer.accept(new EventInput(id, input));
 			}
 		}

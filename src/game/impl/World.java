@@ -69,9 +69,12 @@ public class World implements IWorld
 			Pair<IEntity, Point> pair = getEntityPair(data.getID());
 			if(pair == null)
 			{
-				entities.add(
-						new Pair<IEntity, Point>(
-							new Player(data.getID(), data.getIcon()), new Point(1,1)));
+				synchronized(entities)
+				{
+					entities.add(
+							new Pair<IEntity, Point>(
+								new Player(data.getID(), data.getIcon()), new Point(1,1)));
+				}
 				
 				Note.Log("Created new player with id '" + data.getID() + "' and icon '" + data.getIcon() + "'");
 			}
@@ -126,10 +129,13 @@ public class World implements IWorld
 	{
 		boolean status = true;
 		
-		// Update entities
-		for(Pair<IEntity, Point> entity : entities)
+		synchronized(entities)
 		{
-			entity.first.updateEntity();
+			// Update entities
+			for(Pair<IEntity, Point> entity : entities)
+			{
+				entity.first.updateEntity();
+			}
 		}
 
 		// Process all events
@@ -203,6 +209,7 @@ public class World implements IWorld
 						break;
 				}
 				
+				/*
 				for(Pair<IEntity, Point> p : entities)
 				{
 					if(p.second.equals(targetPoint))
@@ -222,7 +229,7 @@ public class World implements IWorld
 							}
 						}
 					}
-				}
+				}*/
 				
 				target.second = targetPoint.clone();
 			}
