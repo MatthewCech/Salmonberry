@@ -11,11 +11,14 @@ import core.Note;
 public class MapSlice
 {
 	// Variables
-	public static final String empty = "."; 
+	public static final String dirt = "."; 
+	public static final String grass = ",";
 	
 	private int width;
 	private int height;
 	private List<List<String>> map;
+	private double randAdjust = 0;
+	
 	
 	// Constructor
 	public MapSlice(int width, int height)
@@ -30,7 +33,19 @@ public class MapSlice
 			
 			for(int x = 0; x < width; ++x)
 			{
-				item.add(empty);
+				randAdjust *= .9f;
+				if(Math.random() + randAdjust > .92f)
+				{
+					item.add(grass);
+					if(randAdjust < 0.05f)
+					{
+						randAdjust = .6f;
+					}
+				}
+				else
+				{
+					item.add(dirt);
+				}
 			}
 			
 			map.add(item);
