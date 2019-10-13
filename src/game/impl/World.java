@@ -36,6 +36,11 @@ public class World implements IWorld
 		this.onUpdateFinished = new ArrayList<Runnable>();
 		this.onUpdateFinishedOnce = new ArrayList<Runnable>();
 		
+		for(int i = 0; i < 10; ++i)
+		{
+			this.entities.add(new Pair<IEntity, Point>(new NPC(this), Point.random(defaultWidth, defaultHeight)));
+		}
+		
 		Note.Log("CONSTRUCTOR");
 	}
 	
@@ -119,6 +124,37 @@ public class World implements IWorld
 	// Then, in whatever order we've chosen (we could sort by time, for example) process events for the world.
 	public boolean update()
 	{
+		boolean status = true;
+		
+		// Update entities
+		for(Pair<IEntity, Point> entity : entities)
+		{
+			entity.first.updateEntity();
+		}
+
+		// Process all events
+		status &= processQueuedEvents();
+		
+		// Fire off followup events as necessary.
+		// Eternally bound events are fired before one-off update events.
+		for(Runnable r : onUpdateFinished)
+		{
+			r.run();
+		}
+		
+		for(Runnable r : onUpdateFinishedOnce)
+		{
+			r.run();
+		}
+		
+		onUpdateFinishedOnce.clear();
+		
+		// Return status
+		return status;
+	}
+	
+	private boolean processQueuedEvents()
+	{
 		List<QueuedEvent> toProcess = new ArrayList<QueuedEvent>();
 		
 		synchronized(eventsQueue)
@@ -131,59 +167,66 @@ public class World implements IWorld
 			eventsQueue.clear();
 		}
 		
-		if(toProcess.size() > 0)
-		{
-			Note.Log("Found some events to process: " + toProcess.size());
-		}
-		
 		for(QueuedEvent data : toProcess)
 		{
 			IEvent event = data.getEvent();
 			if(event instanceof EventInput)
 			{
-				Pair<IEntity, Point> player = getEntityPair(event.getID());
+				Pair<IEntity, Point> target = getEntityPair(event.getID());
+				Point targetPoint = target.second.clone();
 				
 				switch(((EventInput)event).getData())
 				{
 					case "u": 
-						if(player.second.y > 0)
+						if(targetPoint.y > 0)
 						{
-							player.second.y -= 1;
+							targetPoint.y -= 1;
 						}
 						break;
 					case "d": 
-						if(player.second.y < defaultHeight - 1)
+						if(targetPoint.y < defaultHeight - 1)
 						{
-							player.second.y += 1;
+							targetPoint.y += 1;
 						}
 						break;
 					case "l":
-						if(player.second.x > 0)
+						if(targetPoint.x > 0)
 						{
-							player.second.x -= 1;
+							targetPoint.x -= 1;
 						}
 						break;
 					case "r":
-						if(player.second.x < defaultWidth - 1)
+						if(targetPoint.x < defaultWidth - 1)
 						{
-							player.second.x += 1;
+							targetPoint.x += 1;
 						}
 						break;
 				}
+				
+				for(Pair<IEntity, Point> p : entities)
+				{
+					if(p.second.equals(targetPoint))
+					{
+						if(p.first instanceof NPC)
+						{
+							NPC other = ((NPC)p.first);
+							if(other.getIsWandering())
+							{
+								other.setIcon(NPC.confusedIcon);
+								other.setIsWandering(false);
+							}
+							else
+							{
+								other.setIcon(NPC.defaultIcon);
+								other.setIsWandering(true);
+							}
+						}
+					}
+				}
+				
+				target.second = targetPoint.clone();
 			}
 		}
-		
-		// Fire off events as necessary.
-		for(Runnable r : onUpdateFinished)
-		{
-			r.run();
-		}
-		
-		for(Runnable r : onUpdateFinishedOnce)
-		{
-			r.run();
-		}
-		onUpdateFinishedOnce.clear();
 		
 		return true;
 	}

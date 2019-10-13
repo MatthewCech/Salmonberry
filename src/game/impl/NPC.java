@@ -2,7 +2,9 @@ package game.impl;
 
 import java.util.UUID;
 
+import core.Note;
 import game.api.IEntity;
+import game.api.IWorld;
 import game.events.EventInput;
 
 public class NPC implements IEntity
@@ -11,13 +13,22 @@ public class NPC implements IEntity
 	private String icon;
 	private long lastWanderTime; // in ms
 	private long wanderDelay;    // in ms
+	private boolean isWandering;
+	private IWorld currentWorld;
 	
-	public NPC()
+	public static final String defaultIcon = "%";
+	public static final String confusedIcon = "0";
+	
+	public NPC(IWorld targetWorld)
 	{
-		this.uniqueID = "n" + UUID.randomUUID().toString();
-		this.icon = "n";
+		this.uniqueID = defaultIcon + UUID.randomUUID().toString();
+		this.icon = defaultIcon;
 		this.lastWanderTime = System.currentTimeMillis();
-		this.wanderDelay = (int)(Math.random() * 2000) + 500;
+		this.wanderDelay = (int)(Math.random() * 5000) + 250;
+		this.currentWorld = targetWorld;
+		this.isWandering = true;
+		
+		Note.Log("NPC Created with wander delay of " + this.wanderDelay);
 	}
 	
 	public EventInput wander()
@@ -47,14 +58,29 @@ public class NPC implements IEntity
 		return icon;
 	}
 
+	public void setIcon(String newIcon)
+	{
+		this.icon = newIcon;
+	}
+	
+	public void setIsWandering(boolean isWandering)
+	{
+		this.isWandering = isWandering;
+	}
+	
+	public boolean getIsWandering()
+	{
+		return isWandering;
+	}
+	
 	@Override
 	public boolean updateEntity()
 	{
 		long current = System.currentTimeMillis();
-		if(lastWanderTime + wanderDelay < current)
+		if(lastWanderTime + wanderDelay < current && isWandering)
 		{
 			lastWanderTime = current;
-			wander();
+			currentWorld.queueEvent(wander());
 		}
 		
 		return true;
