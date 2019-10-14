@@ -4,21 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import core.Note;
+import game.api.IMapSlice;
+import game.data.Definitions;
 
 // This is a given 2D piece of a map. A map may lead to or reference
 // other maps - you can think of this as a single level of a multi-level
 // dungeon
-public class MapSlice
+public class MapSlice implements IMapSlice
 {
 	// Variables
-	public static final String dirt = "."; 
-	public static final String grass = ",";
-	
 	private int width;
 	private int height;
 	private List<List<String>> map;
-	private double randAdjust = 0;
-	
 	
 	// Constructor
 	public MapSlice(int width, int height)
@@ -33,19 +30,7 @@ public class MapSlice
 			
 			for(int x = 0; x < width; ++x)
 			{
-				randAdjust *= .9f;
-				if(Math.random() + randAdjust > .92f)
-				{
-					item.add(grass);
-					if(randAdjust < 0.05f)
-					{
-						randAdjust = .6f;
-					}
-				}
-				else
-				{
-					item.add(dirt);
-				}
+				item.add(Definitions.none);
 			}
 			
 			map.add(item);

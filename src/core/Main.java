@@ -12,6 +12,12 @@ public class Main
 	// App entry point
 	public static void main(String[] args)
 	{
+		FullApp(args);
+		//ExperimentalApp(args);
+	}
+	
+	public static void FullApp(String[] args)
+	{
 		// Construct components
 		world = new World();
 		webapp = new WebApp();
@@ -29,5 +35,10 @@ public class Main
 			world.update();
 			webapp.update();
 		}
+	}
+	
+	public static void ExperimentalApp(String[] args)
+	{
+		new experiments.EWorldbuilder();
 	}
 }

@@ -1,4 +1,4 @@
-package game.impl;
+package game.data;
 
 public class Point
 {
@@ -23,10 +23,21 @@ public class Point
 	}
 	
 	// Min is always 0 for both directions.
+	// This is NOT deterministic.
 	public static Point random(int xMax, int yMax)
 	{
 		int x = (int)(Math.random() * xMax);
 		int y = (int)(Math.random() * yMax);
+		
+		return new Point(x, y);
+	}
+	
+	// Min is always 0 for both directions.
+	// This one IS deterministic.
+	public static Point random(int xMax, int yMax, SalmonRandom rand)
+	{
+		int x = (int)(rand.nextDouble() * xMax);
+		int y = (int)(rand.nextDouble() * yMax);
 		
 		return new Point(x, y);
 	}

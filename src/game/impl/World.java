@@ -5,22 +5,26 @@ import java.util.List;
 
 import core.Note;
 import core.Pair;
+import experiments.EWorldbuilder;
 import game.api.IEntity;
 import game.api.IEvent;
+import game.api.IMapSlice;
 import game.api.IWorld;
+import game.data.Definitions;
+import game.data.Point;
+import game.data.SalmonRandom;
 import game.events.EventCreate;
 import game.events.EventInput;
 import game.events.QueuedEvent;
 
 public class World implements IWorld
 {
-	// Variables
-	public final int defaultWidth = 40;
-	public final int defaultHeight = 25;
-	
+
 	// Data
-	private MapSlice slice;
+	private IMapSlice slice;
 	public List<Pair<IEntity, Point>> entities;
+	private int width;
+	private int height;
 	
 	// Event queue
 	public List<QueuedEvent> eventsQueue;
@@ -30,18 +34,33 @@ public class World implements IWorld
 	// Constructor
 	public World()
 	{
-		this.slice = new MapSlice(defaultWidth, defaultHeight);
+		this.width = Definitions.defaultWidth;
+		this.height = Definitions.defaultHeight;
+		
+		this.slice = new MapSlice(width, height);
 		this.entities = new ArrayList<Pair<IEntity, Point>>();
 		this.eventsQueue = new ArrayList<QueuedEvent>();
 		this.onUpdateFinished = new ArrayList<Runnable>();
 		this.onUpdateFinishedOnce = new ArrayList<Runnable>();
 		
-		for(int i = 0; i < 10; ++i)
+		// Generate land
+		SalmonRandom rand = new SalmonRandom(0);
+		rand.setSeed(0);
+		EWorldbuilder.generateLumpyIsland(slice, rand);
+		
+		// Place NPCs
+		for(int i = 0; i < 30; ++i)
 		{
-			this.entities.add(new Pair<IEntity, Point>(new NPC(this), Point.random(defaultWidth, defaultHeight)));
+			Point loc = Point.random(width, height);
+			if(canMoveTo(slice.get(loc.x, loc.y)))
+			{
+				this.entities.add(new Pair<IEntity, Point>(new NPC(this), loc));
+			}
 		}
 		
-		Note.Log("CONSTRUCTOR");
+		// We're done!
+		Note.Log("World Constructed!");
+		Note.Log("\n" + slice.toString());
 	}
 	
 	private Pair<IEntity, Point> getEntityPair(String id)
@@ -73,7 +92,7 @@ public class World implements IWorld
 				{
 					entities.add(
 							new Pair<IEntity, Point>(
-								new Player(data.getID(), data.getIcon()), new Point(1,1)));
+								new Player(data.getID(), data.getIcon()), Definitions.defaultSpawn.clone()));
 				}
 				
 				Note.Log("Created new player with id '" + data.getID() + "' and icon '" + data.getIcon() + "'");
@@ -190,7 +209,7 @@ public class World implements IWorld
 						}
 						break;
 					case "d": 
-						if(targetPoint.y < defaultHeight - 1)
+						if(targetPoint.y < height - 1)
 						{
 							targetPoint.y += 1;
 						}
@@ -202,11 +221,16 @@ public class World implements IWorld
 						}
 						break;
 					case "r":
-						if(targetPoint.x < defaultWidth - 1)
+						if(targetPoint.x < width - 1)
 						{
 							targetPoint.x += 1;
 						}
 						break;
+				}
+				
+				if(canMoveTo(slice.get(targetPoint.x, targetPoint.y)))
+				{
+					target.second = targetPoint.clone();
 				}
 				
 				/*
@@ -230,9 +254,17 @@ public class World implements IWorld
 						}
 					}
 				}*/
-				
-				target.second = targetPoint.clone();
 			}
+		}
+		
+		return true;
+	}
+	
+	public boolean canMoveTo(String target)
+	{
+		if(target == Definitions.water)
+		{
+			return false;
 		}
 		
 		return true;
