@@ -91,7 +91,7 @@
 			<!-- STEP 2 -->
 			<hr class="faded"/>
 			<div class="step-2" style="width: 100%; text-align: center;">
-				<canvas id="drawspace" width="290" height="310"></canvas>
+				<canvas id="drawspace" width="289" height="310"></canvas>
 				<form style="margin-top: 0px;">
 					<input class="controlbutton step-2-disabler" type="button" name="input" value="&#9664;" onClick="sendInput('L');">
 					<input class="controlbutton step-2-disabler" type="button" name="input" value="&#9654;" onClick="sendInput('R');">
@@ -108,11 +108,11 @@
 
 			// Colors
 			let colorLookup = {};
-			colorLookup[","] = "rgba(80, 180, 60, 1)";
-			colorLookup["."] = "rgba(120, 220, 30, 1)";
-			colorLookup["~"] = "rgba(100, 150, 200, 1)";
-			colorLookup["="] = "rgba(160, 160, 160, 1)";
-			colorLookup["&"] = "rgba(90, 90, 90, 1)";
+			colorLookup[","] = { primary:"rgba(80, 180, 60, 1)", secondary:"rgba(30, 130, 10, 1)" };
+			colorLookup["."] = { primary:"rgba(120, 220, 30, 1)", secondary:"rgba(70, 170, 0, 1)" };
+			colorLookup["~"] = { primary:"rgba(100, 150, 200, 1)", secondary:"rgba(50, 10, 150, 1)" };
+			colorLookup["="] = { primary:"rgba(160, 160, 160, 1)", secondary:"rgba(110, 110, 110, 1)" };
+			colorLookup["&"] = { primary:"rgba(90, 90, 90, 1)", secondary:"rgba(40, 40, 40, 1)" };
 
 			// Variables
 			let id = null;
@@ -146,7 +146,6 @@
 			});
 
 			function getColor(color) {
-				console.log(color);
 				if(colorLookup.hasOwnProperty(color)) {
 					return colorLookup[color];
 				} else {
@@ -259,7 +258,7 @@
 				
 				const offset_vertical = 12;  // line height
 				const offset_horizontal = 7.2; // char width
-
+				const offset_color_offset = 2;
 				ctx.font = "12px Courier";
 				
 				for(let y = 0; y < toDraw.length; ++y) {
@@ -267,18 +266,11 @@
 						let char = toDraw[y][x];
 						let color = getColor(char);
 
-						if(color != null) {
-							ctx.fillStyle = color;
-						} else {
-							ctx.fillStyle = "black";
-						}
-
-						// swap back to char later
 						//ctx.fillRect(x, y, 1, 1 ); // < Accidentally created a minimap
-						ctx.fillStyle = color;
-						ctx.fillRect(x * offset_horizontal, y * offset_vertical,  Math.ceil(offset_horizontal),  Math.ceil(offset_vertical));
-						ctx.fillStyle = color;
-						ctx.fillText("=", offset_horizontal * x, offset_vertical * (y + 1));
+						ctx.fillStyle = color ? color.secondary : "grey";
+						ctx.fillRect(x * offset_horizontal, y * offset_vertical + offset_color_offset,  Math.ceil(offset_horizontal),  Math.ceil(offset_vertical));
+						ctx.fillStyle = color ? color.primary : "black";
+						ctx.fillText(char, offset_horizontal * x, offset_vertical * (y + 1));
 					}
 				}
 			}
