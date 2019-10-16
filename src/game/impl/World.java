@@ -269,11 +269,16 @@ public class World implements IWorld
 		
 		return true;
 	}
+
+	public String getEnvironmentAsASCII()
+	{
+		return slice.toString();
+	}
 	
-	// Constructs the world as an ASCII location
-	public String getWorldAsASCII()
-	{	
-		MapSlice visual = slice.clone();
+	public String getEntitiesAsASCII()
+	{
+		MapSlice visual = new MapSlice(slice.getWidth(), slice.getHeight());
+		
 		for(Pair<IEntity, Point> p : entities)
 		{
 			Point loc = p.second;
@@ -289,7 +294,9 @@ public class World implements IWorld
 		// Write visual to string
 		String out = "";
 		out += "World state:\n\n";
-		out += getWorldAsASCII();
+		out += getEnvironmentAsASCII();
+		out += "\n\n\nEntity state:\n\n";
+		out += getEntitiesAsASCII();
 		
 		return out;
 	}

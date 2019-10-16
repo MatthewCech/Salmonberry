@@ -34,11 +34,24 @@
 		.step-2 {
 		}
 
-		#drawspace {
-			display: block;
-			margin-right: auto;
-			margin-left: auto;
+		#drawspace-environment {
+  			position: absolute;
+  			top: 0;
+  			left: 0;
 			margin-bottom: 7px;
+		}
+
+		#drawspace-entities {
+  			position: absolute;
+  			top: 0;
+  			left: 0;
+		}
+
+		#drawspace {
+			position: relative;
+			display: inline-block;
+			width: 289px;
+			height: 304px;
 		}
 
 		.controlbutton{
@@ -61,6 +74,21 @@
 			filter: drop-shadow(3px 3px 3px rgba(0, 0, 0, .2));
 			transform: rotate(30deg);
 		}
+
+		.orange {
+			color: rgb(240, 115, 10);
+		}
+
+		.slider {
+			overflow: hidden;
+			width: 50px;
+		}
+
+		.slidecontainer {
+			margin-left: auto;
+			margin-right: auto;
+
+		}
 	</style>
 
 
@@ -73,9 +101,15 @@
 			<h2 style="margin-bottom: 0px;">Salmonberry</h2>
 			<p class="small" style="margin-top: 0px;">
 				v0.0.4<span class="faded">&emsp;|&emsp;</span>Pre-alpha<span class="faded">&emsp;|&emsp;</span>No saves
-				<br/>Current tick rate: <code style="color: rgb(240, 115, 10)"><span id="tick-time">????</code> ms
+				<br/><strong>Ticks (ms):</strong> Env <span class="orange" id="tick-time">????</span>, Entity <span  class="orange"  id="entity-tick-time">????</span>
 			</p>
-
+			<div class="sliders">
+				<div>
+					<span class="small" style="float: left; padding-top: 5px;">Contrast: </span></div><div><input type="range" style="float: left;" min="0" max="255" value="40" class="slider" id="contrastRange" onchange="drawEnvironment(lastDrawnEnvironment);">
+					<span class="faded" style="float: left; padding-top: 3px;">&emsp;|&emsp;</span>
+					<span class="small" style="float: left; padding-top: 5px;">Blend: </span></div><div><input type="range" min="0" max="25" value="10" class="slider" id="blendRange" onchange="drawEnvironment(lastDrawnEnvironment);">
+				</div>
+			</div>
 			<hr class="faded"/>
 			<p>
 				<input autocomplete="false" hidden></input>
@@ -88,14 +122,17 @@
 			<!-- STEP 2 -->
 			<hr class="faded"/>
 			<div class="step-2" style="width: 100%; text-align: center;">
-				<canvas id="drawspace" width="289" height="304"></canvas>
+				<div id="drawspace">
+					<canvas id="drawspace-environment" width="289" height="304"></canvas>
+					<canvas id="drawspace-entities" width="289" height="304"></canvas>
+				</div>
 				<form style="margin-top: 0px;">
 					<input class="controlbutton step-2-disabler" type="button" name="input" value="&#9664;" onClick="sendInput('L');">
 					<input class="controlbutton step-2-disabler" type="button" name="input" value="&#9654;" onClick="sendInput('R');">
 					&nbsp;
 					<input class="controlbutton step-2-disabler" type="button" name="input" value="&#9650;" onClick="sendInput('U');">
 					<input class="controlbutton step-2-disabler" type="button" name="input" value="&#9660;" onClick="sendInput('D');">
-					<p class="small" style="margin-bottom: 0px; margin-top: 0px;">WASD and arrow keys work too once joined</p>
+					<p class="small" style="margin-bottom: 0px; margin-top: 0px;">WASD and arrow keys are also valid inputs</p>
 				</form>
 			</div>
 
@@ -105,19 +142,28 @@
 
 			// Colors
 			let colorLookup = {};
-			// 40 different for now
-			colorLookup[","] = { primary:"rgba(90, 190, 80, 1)", secondary:"rgba(50, 150, 40, 1)" };
-			colorLookup["."] = { primary:"rgba(120, 210, 70, 1)", secondary:"rgba(80, 170, 30, 1)" };
-			colorLookup["~"] = { primary:"rgba(110, 150, 200, 1)", secondary:"rgba(70, 110, 160, 1)" };
-			colorLookup["="] = { primary:"rgba(170, 160, 150, 1)", secondary:"rgba(140, 120, 110, 1)" };
-			colorLookup["&"] = { primary:"rgba(120, 100, 80, 1)", secondary:"rgba(80, 60, 40, 1)" };
-			colorLookup["%"] = { primary:"black", secondary:"grey" };
+			let lastDrawnEnvironment = null;
+			let lastDrawnEntities = null;
 
-			// Variables
+			// 40 different for now
+			colorLookup[","] = { r:90, g:190, b:80, a:1 };
+			colorLookup["."] = { r:120, g:210, b:70, a:1 };
+			colorLookup["~"] = { r:110, g:150, b:200, a:1 };
+			colorLookup["="] = { r:170, g:160, b:150, a:1 };
+			colorLookup["&"] = { r:120, g:100, b:80, a:1 };
+			colorLookup["%"] = { r:30, g:40, b:50, a:1 };
+
+			// Variables: General
 			let id = null;
 			let step = 1;
-			const activeTickTime = 333;
+			const activeTickTime = 300;
 			const idleTickTime = 2000;
+
+			// Variables: Drawing related
+			const offset_vertical = 12;  // line height
+			const offset_horizontal = 7.2; // char width
+			const offset_color_offset = 2;
+			const draw_font = "12px Courier";
 
 			// Groups
 			let bundle1 = document.getElementsByClassName("step-1"); // Section/Step 1
@@ -165,7 +211,7 @@
 			function setVisibility(bundle, isVisible) {
 				for (i = 0; i < bundle.length; i++) {
 					if(isVisible) {
-						bundle[i].style.display = "inline";
+						bundle[i].style.display = "inline-block";
 					} else {
 						bundle[i].style.display = "none";
 					}
@@ -184,9 +230,8 @@
 						setEnabled(bundle1Disabler, false);
 						setEnabled(bundle2Disabler, true);
 
-						document.getElementById('drawspace').style.opacity = "1";
-
-						sendEventState();
+						sendEventState("environment",()=>{});
+						sendEventState("entities");
 					});
 				}
 			}
@@ -204,13 +249,21 @@
 				console.log(this.responseText)
 			}
 
-			function sendEventState() {
-				sendRequest("state?id=" + id,
+			function sendEventState(layer) {
+				sendRequest("state?id=" + id + "&layer=" + layer,
 					function() {
-						drawState(this.responseText);
+						if(layer == "environment") {
+							lastDrawnEnvironment = this.responseText;
+							drawEnvironment(this.responseText);
+						} else if (layer == "entities") {
+							lastDrawnEntities = this.responseText;
+							drawEntities(this.responseText);
+						} else {
+							drawEnvironment(this.responseText);
+						}
 					}),
 					(err) => {
-						console.log("Error retrieving state!"); 
+						console.log("Error retrieving state for layer '" + layer + "'!"); 
 					};
 			}
 
@@ -228,8 +281,7 @@
 			function sendInput(input) {
 				sendRequest("input?id=" + id + "&input=" + input,
 					function() { 
-					    console.log("Successfully sent input '" + input + "' for ID: " + id);
-						sendEventState();
+						sendEventState("entities");
 				    },
 					(err) => {
 						console.log("Error sending create request!"); 
@@ -242,35 +294,145 @@
 			////////////////////////////////////////////////
 
 			// takes the JSON state response and draws it out
-			function drawState(rawResponse) {
-				let c = document.getElementById("drawspace");
+			function drawEnvironment(rawResponse) {
+				if(rawResponse == null) {
+					return;
+				}
+
+				let time_start = new Date().getTime();
+				let c = document.getElementById("drawspace-environment");
 				let ctx = c.getContext("2d");
 				let state = JSON.parse(rawResponse);
-
-				ctx.beginPath();
-				ctx.rect(0, 0, c.width, c.height);
-				ctx.fillStyle = "rgba(0,0,0,0)";
-				ctx.fill();
 
 				// Split manually because fillText doesn't handle multiple lines.
 				let toDraw = state.data.split('\n');
 				
-				const offset_vertical = 12;  // line height
-				const offset_horizontal = 7.2; // char width
-				const offset_color_offset = 2;
-				ctx.font = "12px Courier";
+				// Clear the canvas before drawing, and set info			
+				const shade = -1 * document.getElementById("contrastRange").value; //-40;
+				const weight = document.getElementById("blendRange").value / 100;
+				ctx.clearRect(0, 0, c.width, c.height);
+				ctx.font = draw_font;
 				
+				// Draw it all!
 				for(let y = 0; y < toDraw.length; ++y) {
 					for(let x = 0; x < toDraw[y].length; ++x) {
 						let char = toDraw[y][x];
-						let color = getColor(char);
+						let char_up = y > 0 ? toDraw[y - 1][x] : char;
+						let char_down = y < toDraw.length - 2 ? toDraw[y + 1][x] : char;
+						let char_left = x > 0 ? toDraw[y][x - 1] : char;
+						let char_right = x < toDraw[y].length - 1 ? toDraw[y][x + 1] : char;
 
-						//ctx.fillRect(x, y, 1, 1 ); // < Accidentally created a minimap
-						ctx.fillStyle = color ? color.secondary : "rgba(20, 30, 40, 1)";
-						ctx.fillRect(x * offset_horizontal, y * offset_vertical + offset_color_offset,  Math.ceil(offset_horizontal),  Math.ceil(offset_vertical));
-						ctx.fillStyle = color ? color.primary : "white";
+						let c = getColor(char);
+						let c_up = getColor(char_up);
+						let c_down = getColor(char_down);
+						let c_left = getColor(char_left);
+						let c_right = getColor(char_right);
+
+						//ctx.fillRect(x, y, 1, 1 ); // < Accidentally creates a minimap!
+						let startX = x * offset_horizontal;
+						let startY = y * offset_vertical + offset_color_offset;
+
+						let maxX = startX + offset_horizontal;
+						let maxY = startY + offset_vertical;
+
+						for(let i = startX; i < maxX; i += 3)
+						{
+							for(let j = startY; j < maxY; j += 3)
+							{
+								// the goal is eventually per-piece interpolation.
+								//
+								// Instead of 0 to 1 tho, we double our t value for a more
+								// aggressive fade that accomodates both the left and right side
+								// tiles. A single slice would look as follows:
+								// 
+								// 000% 050% 100% 150% 200%
+								//
+								// ...where values are measured 0.0 to 2.0.
+								//
+								// let half_dif_x = (maxX - startX) / 2;
+								// let two_t_x = (i - startX) / half_dif_x * 255;
+								// let half_dif_y = (maxY - startY) / 2;
+								// let two_t_y = (j - startY) / half_dif_y * 255;
+								//
+								// For now however, neighboring squares are sampled, each weighing in at 10% of the color.
+								// This works roughly fine, and while it does keep the blocks the same color overall it provides nice variety.
+								//
+
+
+								let color = "rgba(20, 30, 40, 1)";
+
+								if(c)
+								{
+									let r = (c_up.r * weight) + (c_down.r * weight) + (c_left.r * weight) + (c_right.r * weight) + (c.r * (1 - weight * 4));
+									let g = (c_up.g * weight) + (c_down.g * weight) + (c_left.g * weight) + (c_right.g * weight) + (c.g * (1 - weight * 4));
+									let b = (c_up.b * weight) + (c_down.b * weight) + (c_left.b * weight) + (c_right.b * weight) + (c.b * (1 - weight * 4));
+									let a = 1;
+
+
+ 									color = `rgba(${r+shade},${g+shade},${b+shade},${c.a})`;
+ 								}
+								ctx.fillStyle = color;
+								ctx.fillRect(i, j, 4, 4);
+							}
+						}
+					}
+				}
+
+
+				for(let y = 0; y < toDraw.length; ++y) {
+					for(let x = 0; x < toDraw[y].length; ++x) {
+						let char = toDraw[y][x];
+
+						let c = getColor(char);
+						ctx.fillStyle = c ? `rgba(${c.r},${c.g},${c.b},${c.a})`: "white";
 						ctx.fillText(char, offset_horizontal * x, offset_vertical * (y + 1));
 					}
+				}
+
+				let time_end = new Date().getTime();
+				console.log("Redrew environment in " + (time_end - time_start) + " ms")
+			}
+
+			// takes the JSON state response and draws it out
+			function drawEntities(rawResponse) {
+				if(rawResponse == null) {
+					return;
+				}
+
+				let c = document.getElementById("drawspace-entities");
+				let ctx = c.getContext("2d");
+				let state = JSON.parse(rawResponse);
+
+
+				// Split manually because fillText doesn't handle multiple lines.
+				let toDraw = state.data.split('\n');
+
+				// Clear canvas before drawign
+				ctx.clearRect(0, 0, c.width, c.height);
+				ctx.font = draw_font;
+
+				for(let y = 0; y < toDraw.length; ++y) {
+					for(let x = 0; x < toDraw[y].length; ++x) {
+						let char = toDraw[y][x];
+
+
+						if(char == ' ')
+							continue;
+
+						let c = getColor(char);
+
+						ctx.fillStyle = c ? `rgba(${c.r},${c.g},${c.b},${c.a})`: "white";
+						ctx.fillText(char, offset_horizontal * x, offset_vertical * (y + 1));
+					}
+				}
+
+				if(step == 1)
+				{
+					const height = 24;
+					ctx.fillStyle = "white";
+					ctx.font = "" + height + "px courier";
+					ctx.fillText("Choose a username", 24, height);
+					ctx.fillText("to join the world", 24, height * 2)
 				}
 			}
 
@@ -278,7 +440,7 @@
 			function sendRequest(endpoint, onLoad, onError)
 			{
 				let url = "http://{{TARGET_ADDR}}/" + endpoint;
-				console.log("Sending to " + url);
+				//console.log("Sending to " + url);
 				let httpReq = new XMLHttpRequest();
 
 				httpReq.onload = onLoad;
@@ -287,7 +449,6 @@
 				httpReq.setRequestHeader('Content-type', 'application/json');
 				httpReq.send();
 			}
-
 
 			// From https://davidwalsh.name/query-string-javascript
 			function getUrlParameter(name) {
@@ -337,20 +498,26 @@
 			});
 
 			// Start up at idle tick rate
-			sendEventState();
+			sendEventState("environment");
+			sendEventState("entities");
+
 			document.getElementById('tick-time').innerHTML = idleTickTime;
+			document.getElementById('entity-tick-time').innerHTML = idleTickTime;
+
 			setInterval(function() { 
+					sendEventState("environment");
+					document.getElementById('tick-time').innerHTML = idleTickTime;
 					if(step == 1) {
-						document.getElementById('tick-time').innerHTML = idleTickTime;
-						sendEventState()
+						document.getElementById('entity-tick-time').innerHTML = idleTickTime;
+						sendEventState("entities");
 					}
 				}, idleTickTime);
 
 			// Prepare for active tick rate
 			setInterval(function() { 
 					if(step == 2) {
-						document.getElementById('tick-time').innerHTML = activeTickTime;
-						sendEventState()
+						document.getElementById('entity-tick-time').innerHTML = activeTickTime;
+						sendEventState("entities");
 					}
 				}, activeTickTime);
 		</script>
