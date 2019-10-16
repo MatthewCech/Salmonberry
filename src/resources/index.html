@@ -106,6 +106,14 @@
 		<!-- Page interactions -->
 		<script type="text/javascript">
 
+			// Colors
+			let colorLookup = {};
+			colorLookup[","] = "green";
+			colorLookup["."] = "yellow";
+			colorLookup["~"] = "blue";
+			colorLookup["="] = "grey";
+			colorLookup["&"] = "white";
+
 			// Variables
 			let id = null;
 			let step = 1;
@@ -136,6 +144,15 @@
 					}
 				}
 			});
+
+			function getColor(color) {
+				console.log(color);
+				if(colorLookup.hasOwnProperty(color)) {
+					return colorLookup[color];
+				} else {
+					return null;
+				}
+			}
 
 			function setEnabled(target, isEnabled) {
 				for (i = 0; i < target.length; i++) {
@@ -239,11 +256,25 @@
 
 				// Split manually because fillText doesn't handle multiple lines.
 				let toDraw = state.data.split('\n');
-				ctx.fillStyle = "black";
-				const offset = 12; // line height
+				
+				const offset_vertical = 12;  // line height
+				const offset_horizontal = 7.2; // char width
+
 				ctx.font = "12px Courier";
+				
 				for(let i = 0; i < toDraw.length; ++i) {
-					ctx.fillText(toDraw[i], 0, offset * (i + 1));
+					for(let j = 0; j < toDraw[i].length; ++j) {
+						let char = toDraw[i][j];
+						let color = getColor(char);
+
+						if(color != null) {
+							ctx.fillStyle = color;
+						} else {
+							ctx.fillStyle = "black";
+						}
+
+						ctx.fillText(char, offset_horizontal * j, offset_vertical * (i + 1));
+					}
 				}
 			}
 
