@@ -35,8 +35,9 @@ this exception to your version of the library, but you are not
 obligated to do so.  If you do not wish to do so, delete this
 exception statement from your version. */
 
-
 package game.data;
+
+// This is here so that there's a consistent number generator that exists, even if Java's updates.
 
 import java.io.Serializable;
 /**

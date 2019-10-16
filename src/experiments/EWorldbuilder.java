@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import game.api.IMapSlice;
-import game.data.Definitions;
+import game.data.Constants;
 import game.data.Point;
 import game.data.SalmonRandom;
 import game.impl.MapSlice;
@@ -15,7 +15,7 @@ public class EWorldbuilder
 	
 	public EWorldbuilder()
 	{
-		slice = new MapSlice(Definitions.defaultWidth, Definitions.defaultHeight);
+		slice = new MapSlice(Constants.defaultWidth, Constants.defaultHeight);
 		generateLumpyIsland(slice, new SalmonRandom());
 		System.out.println(slice.toString());
 	}
@@ -25,7 +25,7 @@ public class EWorldbuilder
 		// Acquire info
 		int height = map.getHeight();
 		int width = map.getWidth();
-		String water = Definitions.water;
+		String water = Constants.water;
 		
 		// Fill with defaults
 		for(int y = 0; y < height; ++y)
@@ -47,7 +47,7 @@ public class EWorldbuilder
 		
 		for(Point loc : hubs)
 		{
-			map.set(loc.x, loc.y, Definitions.house);
+			map.set(loc.x, loc.y, Constants.house);
 		}
 		
 		// Fill with defaults
@@ -61,32 +61,39 @@ public class EWorldbuilder
 				String up = map.get(x, y - 1);
 				String down = map.get(x, y + 1);
 				
-				if(current == Definitions.house)
+				if(current == Constants.house)
 				{
-					if(left != Definitions.house) map.set(x - 1, y, Definitions.grass);
-					if(right != Definitions.house) map.set(x + 1, y, Definitions.grass);
-					if(up != Definitions.house) map.set(x, y - 1, Definitions.grass);
-					if(down != Definitions.house) map.set(x, y + 1, Definitions.grass);
+					if(left != Constants.house) map.set(x - 1, y, Constants.grass);
+					if(right != Constants.house) map.set(x + 1, y, Constants.grass);
+					if(up != Constants.house) map.set(x, y - 1, Constants.grass);
+					if(down != Constants.house) map.set(x, y + 1, Constants.grass);
 				}
 			}
 		}
 		
-		growIconWithChance(map, Definitions.grass, Definitions.grass, Definitions.house, .8f, rand);
-		growIconWithChance(map, Definitions.grass, Definitions.grass, Definitions.house, .7f, rand);
-		growIconWithChance(map, Definitions.grass, Definitions.grass, Definitions.house, .6f, rand);
-		growIconWithChance(map, Definitions.grass, Definitions.grass, Definitions.house, .5f, rand);
-		growIconWithChance(map, Definitions.grass, Definitions.grass, Definitions.house, .4f, rand);
-		growIconWithChance(map, Definitions.grass, Definitions.grass, Definitions.house, .3f, rand);
-		growIconWithChance(map, Definitions.grass, Definitions.grass, Definitions.house, .2f, rand);
-		growIconWithChance(map, Definitions.grass, Definitions.grass, Definitions.house, .1f, rand);
-		growIconWithChance(map, Definitions.grass, Definitions.grass, Definitions.house, .1f, rand);
-		growIconWithChance(map, Definitions.grass, Definitions.grass, Definitions.house, .1f, rand);
-		growIconWithChance(map, Definitions.grass, Definitions.grass, Definitions.house, .1f, rand);
+		// Build islands and grass
+		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .8f, rand);
+		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .7f, rand);
+		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .6f, rand);
+		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .5f, rand);
+		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .4f, rand);
+		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .3f, rand);
+		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .2f, rand);
+		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .1f, rand);
+		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .1f, rand);
+		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .1f, rand);
+		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .1f, rand);
 		
-		growIconWithChance(map, Definitions.grass, Definitions.dirt, Definitions.house, .2f, rand);
+		// Build houses
+		growIconWithChance(map, Constants.grass, Constants.dirt, Constants.house, .2f, rand);
 		
-		borderWithChance(map, new String[] {Definitions.grass, Definitions.dirt }, Definitions.water, Definitions.sand, .9f, rand);
+		// Build sand
+		borderWithChance(map, new String[] {Constants.grass, Constants.dirt }, Constants.water, Constants.sand, .9f, rand);
 		
+		// Build oceans
+		placeIfUniformSurroundings(map, 4, Constants.water, Constants.ocean);
+		
+		// Build roads
 		for(int i = 0; i < hubs.size() - 1; ++i)
 		{
 			Point current = hubs.get(i).clone();
@@ -106,9 +113,48 @@ public class EWorldbuilder
 				if(current.equals(target))
 					break;
 				
-				map.set(current.x, current.y, Definitions.road);
+				map.set(current.x, current.y, Constants.road);
 			}
 		}
+	}
+	
+	private static void placeIfUniformSurroundings(IMapSlice map, int dist, String target, String replacement)
+	{
+		IMapSlice temp = map.clone();
+		int height = map.getHeight();
+		int width = map.getWidth();
+		
+		for(int y = 0; y < height; ++y)
+		{
+			for(int x = 0; x < width; ++x)
+			{
+				String current = map.get(x, y);
+				
+				if(!current.contentEquals(target))
+					continue;
+				
+				boolean isOcean = true;
+				for(int i = 1; i < dist; ++i)
+				{
+					String left = map.get(x - i, y);
+					String right = map.get(x + i, y);
+					String up = map.get(x, y - i);
+					String down = map.get(x, y + i);
+					
+					if(left != null) { isOcean &= left.contentEquals(target); }
+					if(right != null) { isOcean &= right.contentEquals(target); }
+					if(up != null) { isOcean &= up.contentEquals(target); }
+					if(down != null) { isOcean &= down.contentEquals(target); }
+				}
+				
+				if(isOcean)
+				{
+					temp.set(x, y, replacement);
+				}
+			}
+		}
+		
+		setMapTo(map, temp);
 	}
 	
 	private static void borderWithChance(IMapSlice map, String[] triggers, String toTarget, String toPlace, double chance, SalmonRandom rand)
@@ -123,7 +169,7 @@ public class EWorldbuilder
 			{
 				String current = map.get(x, y);
 				
-				if(!current.contains(toTarget))
+				if(!current.contentEquals(toTarget))
 					continue;
 				
 				String left = map.get(x - 1, y);
@@ -147,11 +193,19 @@ public class EWorldbuilder
 			}
 		}
 		
+		setMapTo(map, temp);
+	}
+	
+	private static void setMapTo(IMapSlice target, IMapSlice source)
+	{
+		int height = target.getHeight();
+		int width = target.getWidth();
+		
 		for(int y = 0; y < height; ++y)
 		{
 			for(int x = 0; x < width; ++x)
 			{
-				map.set(x, y, temp.get(x, y));
+				target.set(x, y, source.get(x, y));
 			}
 		}
 	}
@@ -189,13 +243,7 @@ public class EWorldbuilder
 			}
 		}
 		
-		for(int y = 0; y < height; ++y)
-		{
-			for(int x = 0; x < width; ++x)
-			{
-				map.set(x, y, temp.get(x, y));
-			}
-		}
+		setMapTo(map, temp);
 	}
 	
 	private static double randAdjust = 0;
@@ -204,8 +252,8 @@ public class EWorldbuilder
 		int height = map.getHeight();
 		int width = map.getWidth();
 		
-		String dirt = Definitions.dirt;
-		String grass = Definitions.grass;
+		String dirt = Constants.dirt;
+		String grass = Constants.grass;
 		
 		//IMapSlice = new
 		for(int y = 0; y < height; ++y)

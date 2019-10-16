@@ -5,7 +5,7 @@ import java.util.List;
 
 import core.Note;
 import game.api.IMapSlice;
-import game.data.Definitions;
+import game.data.Constants;
 
 // This is a given 2D piece of a map. A map may lead to or reference
 // other maps - you can think of this as a single level of a multi-level
@@ -30,7 +30,7 @@ public class MapSlice implements IMapSlice
 			
 			for(int x = 0; x < width; ++x)
 			{
-				item.add(Definitions.none);
+				item.add(Constants.none);
 			}
 			
 			map.add(item);
