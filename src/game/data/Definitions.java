@@ -8,6 +8,7 @@ public class Definitions
 	public static final String grass = ",";
 	public static final String water = "~";
 	public static final String house = "&";
+	public static final String sand = "-";
 	public static final String road = "=";
 	
 	// Default variables

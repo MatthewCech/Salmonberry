@@ -105,7 +105,7 @@
 			</p>
 			<div class="sliders">
 				<div>
-					<span class="small" style="float: left; padding-top: 5px;">Contrast: </span></div><div><input type="range" style="float: left;" min="0" max="255" value="40" class="slider" id="contrastRange" onchange="drawEnvironment(lastDrawnEnvironment);">
+					<span class="small" style="float: left; padding-top: 5px;">Contrast: </span></div><div><input type="range" style="float: left;" min="0" max="255" value="35" class="slider" id="contrastRange" onchange="drawEnvironment(lastDrawnEnvironment);">
 					<span class="faded" style="float: left; padding-top: 3px;">&emsp;|&emsp;</span>
 					<span class="small" style="float: left; padding-top: 5px;">Blend: </span></div><div><input type="range" min="0" max="25" value="10" class="slider" id="blendRange" onchange="drawEnvironment(lastDrawnEnvironment);">
 				</div>
@@ -140,18 +140,24 @@
 		<!-- Page interactions -->
 		<script type="text/javascript">
 
-			// Colors
-			let colorLookup = {};
-			let lastDrawnEnvironment = null;
 			let lastDrawnEntities = null;
 
-			// 40 different for now
+			let lastDrawnEnvironment = null;
+			// Colors
+			// foreground and background are 40 different for now
+			let colorLookup = {};
 			colorLookup[","] = { r:90, g:190, b:80, a:1 };
 			colorLookup["."] = { r:120, g:210, b:70, a:1 };
 			colorLookup["~"] = { r:110, g:150, b:200, a:1 };
 			colorLookup["="] = { r:170, g:160, b:150, a:1 };
+			colorLookup["-"] = { r:244, g:218, b:168, a:1 };
 			colorLookup["&"] = { r:120, g:100, b:80, a:1 };
 			colorLookup["%"] = { r:30, g:40, b:50, a:1 };
+
+			// If present and true, omit from blurring.
+			let blurOmit = {};
+			blurOmit["="] = true;
+			blurOmit["&"] = true;
 
 			// Variables: General
 			let id = null;
@@ -189,6 +195,14 @@
 					}
 				}
 			});
+
+			function isBlurOmit(color) {
+				if(blurOmit.hasOwnProperty(color)) {
+					return blurOmit[color]
+				} else {
+					return false;
+				}
+			}
 
 			function getColor(color) {
 				if(colorLookup.hasOwnProperty(color)) {
@@ -322,6 +336,11 @@
 						let char_left = x > 0 ? toDraw[y][x - 1] : char;
 						let char_right = x < toDraw[y].length - 1 ? toDraw[y][x + 1] : char;
 
+						if(isBlurOmit(char_up)) char_up = char;
+						if(isBlurOmit(char_down)) char_down = char;
+						if(isBlurOmit(char_left)) char_left = char;
+						if(isBlurOmit(char_right)) char_right = char;
+
 						let c = getColor(char);
 						let c_up = getColor(char_up);
 						let c_down = getColor(char_down);
@@ -358,19 +377,22 @@
 								// This works roughly fine, and while it does keep the blocks the same color overall it provides nice variety.
 								//
 
-
 								let color = "rgba(20, 30, 40, 1)";
 
-								if(c)
+								if(c != null)
 								{
-									let r = (c_up.r * weight) + (c_down.r * weight) + (c_left.r * weight) + (c_right.r * weight) + (c.r * (1 - weight * 4));
-									let g = (c_up.g * weight) + (c_down.g * weight) + (c_left.g * weight) + (c_right.g * weight) + (c.g * (1 - weight * 4));
-									let b = (c_up.b * weight) + (c_down.b * weight) + (c_left.b * weight) + (c_right.b * weight) + (c.b * (1 - weight * 4));
-									let a = 1;
+									if(isBlurOmit(char)) {
+										color = `rgba(${c.r + shade}, ${c.g + shade}, ${c.b + shade}, ${c.a})`;
+									} else {
+										let r = (c_up.r * weight) + (c_down.r * weight) + (c_left.r * weight) + (c_right.r * weight) + (c.r * (1 - weight * 4));
+										let g = (c_up.g * weight) + (c_down.g * weight) + (c_left.g * weight) + (c_right.g * weight) + (c.g * (1 - weight * 4));
+										let b = (c_up.b * weight) + (c_down.b * weight) + (c_left.b * weight) + (c_right.b * weight) + (c.b * (1 - weight * 4));
+										let a = 1;
 
-
- 									color = `rgba(${r+shade},${g+shade},${b+shade},${c.a})`;
+										color = `rgba(${r + shade}, ${g + shade}, ${b + shade}, ${a})`;
+									}
  								}
+
 								ctx.fillStyle = color;
 								ctx.fillRect(i, j, 4, 4);
 							}

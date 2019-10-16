@@ -85,6 +85,8 @@ public class EWorldbuilder
 		
 		growIconWithChance(map, Definitions.grass, Definitions.dirt, Definitions.house, .2f, rand);
 		
+		borderWithChance(map, new String[] {Definitions.grass, Definitions.dirt }, Definitions.water, Definitions.sand, .9f, rand);
+		
 		for(int i = 0; i < hubs.size() - 1; ++i)
 		{
 			Point current = hubs.get(i).clone();
@@ -109,13 +111,57 @@ public class EWorldbuilder
 		}
 	}
 	
+	private static void borderWithChance(IMapSlice map, String[] triggers, String toTarget, String toPlace, double chance, SalmonRandom rand)
+	{
+		IMapSlice temp = map.clone();
+		int height = map.getHeight();
+		int width = map.getWidth();
+		
+		for(int y = 0; y < height; ++y)
+		{
+			for(int x = 0; x < width; ++x)
+			{
+				String current = map.get(x, y);
+				
+				if(!current.contains(toTarget))
+					continue;
+				
+				String left = map.get(x - 1, y);
+				String right = map.get(x + 1, y);
+				String up = map.get(x, y - 1);
+				String down = map.get(x, y + 1);
+				
+				for(String target : triggers)
+				{
+					if(left != null && left.contentEquals(target) 
+					|| right != null && right.contentEquals(target) 
+					|| up != null && up.contentEquals(target)
+					|| down != null && down.contentEquals(target))
+					{
+						if(rand.nextDouble() < chance)
+						{
+							temp.set(x, y, toPlace);
+						}
+					}
+				}
+			}
+		}
+		
+		for(int y = 0; y < height; ++y)
+		{
+			for(int x = 0; x < width; ++x)
+			{
+				map.set(x, y, temp.get(x, y));
+			}
+		}
+	}
+	
 	private static void growIconWithChance(IMapSlice map, String target, String growth, String exclude, double chance, SalmonRandom rand)
 	{
 		IMapSlice temp = map.clone();
 		int height = map.getHeight();
 		int width = map.getWidth();
 		
-		// Fill with defaults
 		for(int y = 0; y < height; ++y)
 		{
 			for(int x = 0; x < width; ++x)
