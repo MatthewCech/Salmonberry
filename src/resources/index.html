@@ -41,7 +41,7 @@
 			margin-left: auto;
 			margin-bottom: 7px;
 
-			opacity: .5;
+			/* opacity: .5; */
 		}
 
 		.controlbutton{
@@ -108,11 +108,11 @@
 
 			// Colors
 			let colorLookup = {};
-			colorLookup[","] = "green";
-			colorLookup["."] = "yellow";
-			colorLookup["~"] = "blue";
-			colorLookup["="] = "grey";
-			colorLookup["&"] = "white";
+			colorLookup[","] = "rgba(80, 180, 60, 1)";
+			colorLookup["."] = "rgba(120, 220, 30, 1)";
+			colorLookup["~"] = "rgba(100, 150, 200, 1)";
+			colorLookup["="] = "rgba(160, 160, 160, 1)";
+			colorLookup["&"] = "rgba(90, 90, 90, 1)";
 
 			// Variables
 			let id = null;
@@ -262,9 +262,9 @@
 
 				ctx.font = "12px Courier";
 				
-				for(let i = 0; i < toDraw.length; ++i) {
-					for(let j = 0; j < toDraw[i].length; ++j) {
-						let char = toDraw[i][j];
+				for(let y = 0; y < toDraw.length; ++y) {
+					for(let x = 0; x < toDraw[y].length; ++x) {
+						let char = toDraw[y][x];
 						let color = getColor(char);
 
 						if(color != null) {
@@ -273,7 +273,12 @@
 							ctx.fillStyle = "black";
 						}
 
-						ctx.fillText(char, offset_horizontal * j, offset_vertical * (i + 1));
+						// swap back to char later
+						//ctx.fillRect(x, y, 1, 1 ); // < Accidentally created a minimap
+						ctx.fillStyle = color;
+						ctx.fillRect(x * offset_horizontal, y * offset_vertical,  Math.ceil(offset_horizontal),  Math.ceil(offset_vertical));
+						ctx.fillStyle = color;
+						ctx.fillText("=", offset_horizontal * x, offset_vertical * (y + 1));
 					}
 				}
 			}
