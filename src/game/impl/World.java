@@ -10,7 +10,7 @@ import game.api.IEntity;
 import game.api.IEvent;
 import game.api.IMapSlice;
 import game.api.IWorld;
-import game.data.Definitions;
+import game.data.Constants;
 import game.data.Point;
 import game.data.SalmonRandom;
 import game.events.EventCreate;
@@ -34,8 +34,8 @@ public class World implements IWorld
 	// Constructor
 	public World()
 	{
-		this.width = Definitions.defaultWidth;
-		this.height = Definitions.defaultHeight;
+		this.width = Constants.defaultWidth;
+		this.height = Constants.defaultHeight;
 		
 		this.slice = new MapSlice(width, height);
 		this.entities = new ArrayList<Pair<IEntity, Point>>();
@@ -92,7 +92,7 @@ public class World implements IWorld
 				{
 					entities.add(
 							new Pair<IEntity, Point>(
-								new Player(data.getID(), data.getIcon()), Definitions.defaultSpawn.clone()));
+								new Player(data.getID(), data.getIcon()), Constants.defaultSpawn.clone()));
 				}
 				
 				Note.Log("Created new player with id '" + data.getID() + "' and icon '" + data.getIcon() + "'");
@@ -262,18 +262,26 @@ public class World implements IWorld
 	
 	public boolean canMoveTo(String target)
 	{
-		if(target == Definitions.water)
+		for(String impasse : Constants.impassibleTerrain)
 		{
-			return false;
+			if(target.contentEquals(impasse))
+			{
+				return false;
+			}
 		}
 		
 		return true;
 	}
+
+	public String getEnvironmentAsASCII()
+	{
+		return slice.toString();
+	}
 	
-	// Constructs the world as an ASCII location
-	public String getWorldAsASCII()
-	{	
-		MapSlice visual = slice.clone();
+	public String getEntitiesAsASCII()
+	{
+		MapSlice visual = new MapSlice(slice.getWidth(), slice.getHeight());
+		
 		for(Pair<IEntity, Point> p : entities)
 		{
 			Point loc = p.second;
@@ -289,7 +297,9 @@ public class World implements IWorld
 		// Write visual to string
 		String out = "";
 		out += "World state:\n\n";
-		out += getWorldAsASCII();
+		out += getEnvironmentAsASCII();
+		out += "\n\n\nEntity state:\n\n";
+		out += getEntitiesAsASCII();
 		
 		return out;
 	}
