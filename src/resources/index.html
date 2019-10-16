@@ -78,6 +78,17 @@
 		.orange {
 			color: rgb(240, 115, 10);
 		}
+
+		.slider {
+			overflow: hidden;
+			width: 50px;
+		}
+
+		.slidecontainer {
+			margin-left: auto;
+			margin-right: auto;
+
+		}
 	</style>
 
 
@@ -92,8 +103,12 @@
 				v0.0.4<span class="faded">&emsp;|&emsp;</span>Pre-alpha<span class="faded">&emsp;|&emsp;</span>No saves
 				<br/><strong>Ticks (ms):</strong> Env <span class="orange" id="tick-time">????</span>, Entity <span  class="orange"  id="entity-tick-time">????</span>
 			</p>
-			<div class="slidecontainer">
-  				<div><span class="small" style="float: left; padding-top: 5px;">ASCII Contrast: </span></div><div><input type="range" min="0" max="255" value="40" class="slider" id="myRange" onchange="drawEnvironment(lastDrawnEnvironment);"></div>
+			<div class="sliders">
+				<div>
+					<span class="small" style="float: left; padding-top: 5px;">Contrast: </span></div><div><input type="range" style="float: left;" min="0" max="255" value="40" class="slider" id="myRange" onchange="drawEnvironment(lastDrawnEnvironment);">
+					<span class="faded" style="float: left; padding-top: 3px;">&emsp;|&emsp;</span>
+					<span class="small" style="float: left; padding-top: 5px;">Blend: </span></div><div><input type="range" min="0" max="25" value="10" class="slider" id="myRange" onchange="drawEnvironment(lastDrawnEnvironment);">
+				</div>
 			</div>
 			<hr class="faded"/>
 			<p>
@@ -284,6 +299,8 @@
 					return;
 				}
 
+
+				let time_start = new Date().getTime();
 				let c = document.getElementById("drawspace-environment");
 				let ctx = c.getContext("2d");
 				let state = JSON.parse(rawResponse);
@@ -301,16 +318,79 @@
 				for(let y = 0; y < toDraw.length; ++y) {
 					for(let x = 0; x < toDraw[y].length; ++x) {
 						let char = toDraw[y][x];
+						let char_up = y > 0 ? toDraw[y - 1][x] : char;
+						let char_down = y < toDraw.length - 2 ? toDraw[y + 1][x] : char;
+						let char_left = x > 0 ? toDraw[y][x - 1] : char;
+						let char_right = x < toDraw[y].length - 1 ? toDraw[y][x + 1] : char;
 
 						let c = getColor(char);
+						let c_up = getColor(char_up);
+						let c_down = getColor(char_down);
+						let c_left = getColor(char_left);
+						let c_right = getColor(char_right);
 
-						//ctx.fillRect(x, y, 1, 1 ); // < Accidentally created a minimap
-						ctx.fillStyle = c ? `rgba(${c.r+shade},${c.g+shade},${c.b+shade},${c.a})` : "rgba(20, 30, 40, 1)";
-						ctx.fillRect(x * offset_horizontal, y * offset_vertical + offset_color_offset,  Math.ceil(offset_horizontal),  Math.ceil(offset_vertical));
+						//ctx.fillRect(x, y, 1, 1 ); // < Accidentally creates a minimap!
+						let startX = x * offset_horizontal;
+						let startY = y * offset_vertical + offset_color_offset;
+
+						let maxX = startX + offset_horizontal;
+						let maxY = startY + offset_vertical;
+
+						for(let i = startX; i < maxX; i += 3)
+						{
+							for(let j = startY; j < maxY; j += 3)
+							{
+								// the goal is eventually per-piece interpolation.
+								//
+								// Instead of 0 to 1 tho, we double our t value for a more
+								// aggressive fade that accomodates both the left and right side
+								// tiles. A single slice would look as follows:
+								// 
+								// 000% 050% 100% 150% 200%
+								//
+								// ...where values are measured 0.0 to 2.0.
+								//
+								// let half_dif_x = (maxX - startX) / 2;
+								// let two_t_x = (i - startX) / half_dif_x * 255;
+								// let half_dif_y = (maxY - startY) / 2;
+								// let two_t_y = (j - startY) / half_dif_y * 255;
+								//
+								// For now however, neighboring squares are sampled, each weighing in at 10% of the color.
+								// This works roughly fine, and while it does keep the blocks the same color overall it provides nice variety.
+								//
+
+								const weight = 0.1;
+								let color = "rgba(20, 30, 40, 1)";
+								if(c)
+								{
+									let r = (c_up.r * weight) + (c_down.r * weight) + (c_left.r * weight) + (c_right.r * weight) + (c.r * (1 - weight * 4));
+									let g = (c_up.g * weight) + (c_down.g * weight) + (c_left.g * weight) + (c_right.g * weight) + (c.g * (1 - weight * 4));
+									let b = (c_up.b * weight) + (c_down.b * weight) + (c_left.b * weight) + (c_right.b * weight) + (c.b * (1 - weight * 4));
+									let a = 1;
+
+
+ 									color = `rgba(${r+shade},${g+shade},${b+shade},${c.a})`;
+ 								}
+								ctx.fillStyle = color;
+								ctx.fillRect(i, j, 4, 4);
+							}
+						}
+					}
+				}
+
+
+				for(let y = 0; y < toDraw.length; ++y) {
+					for(let x = 0; x < toDraw[y].length; ++x) {
+						let char = toDraw[y][x];
+
+						let c = getColor(char);
 						ctx.fillStyle = c ? `rgba(${c.r},${c.g},${c.b},${c.a})`: "white";
 						ctx.fillText(char, offset_horizontal * x, offset_vertical * (y + 1));
 					}
 				}
+
+				let time_end = new Date().getTime();
+				console.log("Redrew environment in " + (time_end - time_start) + " ms")
 			}
 
 			// takes the JSON state response and draws it out
