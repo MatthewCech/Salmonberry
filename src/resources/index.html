@@ -105,9 +105,9 @@
 			</p>
 			<div class="sliders">
 				<div>
-					<span class="small" style="float: left; padding-top: 5px;">Contrast: </span></div><div><input type="range" style="float: left;" min="0" max="255" value="40" class="slider" id="myRange" onchange="drawEnvironment(lastDrawnEnvironment);">
+					<span class="small" style="float: left; padding-top: 5px;">Contrast: </span></div><div><input type="range" style="float: left;" min="0" max="255" value="40" class="slider" id="contrastRange" onchange="drawEnvironment(lastDrawnEnvironment);">
 					<span class="faded" style="float: left; padding-top: 3px;">&emsp;|&emsp;</span>
-					<span class="small" style="float: left; padding-top: 5px;">Blend: </span></div><div><input type="range" min="0" max="25" value="10" class="slider" id="myRange" onchange="drawEnvironment(lastDrawnEnvironment);">
+					<span class="small" style="float: left; padding-top: 5px;">Blend: </span></div><div><input type="range" min="0" max="25" value="10" class="slider" id="blendRange" onchange="drawEnvironment(lastDrawnEnvironment);">
 				</div>
 			</div>
 			<hr class="faded"/>
@@ -299,18 +299,17 @@
 					return;
 				}
 
-
 				let time_start = new Date().getTime();
 				let c = document.getElementById("drawspace-environment");
 				let ctx = c.getContext("2d");
 				let state = JSON.parse(rawResponse);
 
-
 				// Split manually because fillText doesn't handle multiple lines.
 				let toDraw = state.data.split('\n');
 				
 				// Clear the canvas before drawing, and set info			
-				const shade = -1 * document.getElementById("myRange").value; //-40;
+				const shade = -1 * document.getElementById("contrastRange").value; //-40;
+				const weight = document.getElementById("blendRange").value / 100;
 				ctx.clearRect(0, 0, c.width, c.height);
 				ctx.font = draw_font;
 				
@@ -359,8 +358,9 @@
 								// This works roughly fine, and while it does keep the blocks the same color overall it provides nice variety.
 								//
 
-								const weight = 0.1;
+
 								let color = "rgba(20, 30, 40, 1)";
+
 								if(c)
 								{
 									let r = (c_up.r * weight) + (c_down.r * weight) + (c_left.r * weight) + (c_right.r * weight) + (c.r * (1 - weight * 4));
