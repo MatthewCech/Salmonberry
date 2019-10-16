@@ -110,9 +110,10 @@
 			let colorLookup = {};
 			colorLookup[","] = { primary:"rgba(80, 180, 60, 1)", secondary:"rgba(30, 130, 10, 1)" };
 			colorLookup["."] = { primary:"rgba(120, 220, 30, 1)", secondary:"rgba(70, 170, 0, 1)" };
-			colorLookup["~"] = { primary:"rgba(100, 150, 200, 1)", secondary:"rgba(50, 10, 150, 1)" };
-			colorLookup["="] = { primary:"rgba(160, 160, 160, 1)", secondary:"rgba(110, 110, 110, 1)" };
-			colorLookup["&"] = { primary:"rgba(90, 90, 90, 1)", secondary:"rgba(40, 40, 40, 1)" };
+			colorLookup["~"] = { primary:"rgba(100, 150, 200, 1)", secondary:"rgba(50, 100, 150, 1)" };
+			colorLookup["="] = { primary:"rgba(170, 160, 150, 1)", secondary:"rgba(130, 110, 100, 1)" };
+			colorLookup["&"] = { primary:"rgba(120, 100, 80, 1)", secondary:"rgba(70, 50, 30, 1)" };
+			colorLookup["%"] = { primary:"black", secondary:"grey" };
 
 			// Variables
 			let id = null;
@@ -267,9 +268,9 @@
 						let color = getColor(char);
 
 						//ctx.fillRect(x, y, 1, 1 ); // < Accidentally created a minimap
-						ctx.fillStyle = color ? color.secondary : "grey";
+						ctx.fillStyle = color ? color.secondary : "black";
 						ctx.fillRect(x * offset_horizontal, y * offset_vertical + offset_color_offset,  Math.ceil(offset_horizontal),  Math.ceil(offset_vertical));
-						ctx.fillStyle = color ? color.primary : "black";
+						ctx.fillStyle = color ? color.primary : "white";
 						ctx.fillText(char, offset_horizontal * x, offset_vertical * (y + 1));
 					}
 				}
