@@ -107,7 +107,8 @@
 
 			// Colors
 			let colorLookup = {};
-			let lastDrawn = null;
+			let lastDrawnEnvironment = null;
+			let lastDrawnEntities = null;
 
 			// 40 different for now
 			colorLookup[","] = { r:90, g:190, b:80, a:1 };
@@ -115,13 +116,18 @@
 			colorLookup["~"] = { r:110, g:150, b:200, a:1 };
 			colorLookup["="] = { r:170, g:160, b:150, a:1 };
 			colorLookup["&"] = { r:120, g:100, b:80, a:1 };
-			colorLookup["%"] = { r:140, g:140, b:140, a:1 };
+			colorLookup["%"] = { r:30, g:40, b:50, a:1 };
 
-			// Variables
+			// Variables: General
 			let id = null;
 			let step = 1;
 			const activeTickTime = 333;
 			const idleTickTime = 2000;
+
+			// Variables: Drawing related
+			const offset_vertical = 12;  // line height
+			const offset_horizontal = 7.2; // char width
+			const offset_color_offset = 2;
 
 			// Groups
 			let bundle1 = document.getElementsByClassName("step-1"); // Section/Step 1
@@ -190,7 +196,8 @@
 
 						document.getElementById('drawspace').style.opacity = "1";
 
-						sendEventState();
+						sendEventState("environment",()=>{});
+						sendEventState("entities");
 					});
 				}
 			}
@@ -208,14 +215,24 @@
 				console.log(this.responseText)
 			}
 
-			function sendEventState() {
-				sendRequest("state?id=" + id,
+			function sendEventState(layer, onfinished) {
+				sendRequest("state?id=" + id + "&layer=" + layer,
 					function() {
-						lastDrawn = this.responseText;
-						drawState(this.responseText);
+						if(layer == "environment") {
+							lastDrawnEnvironment = this.responseText;
+							drawState(this.responseText);
+							onfinished();
+						} else if (layer == "entities") {
+							lastDrawnEnvironment = this.responseText;
+							drawEntities(this.responseText);
+							onfinished();
+						} else {
+							drawState(this.responseText);
+							onfinished();
+						}
 					}),
 					(err) => {
-						console.log("Error retrieving state!"); 
+						console.log("Error retrieving state for layer '" + layer + "'!"); 
 					};
 			}
 
@@ -234,7 +251,8 @@
 				sendRequest("input?id=" + id + "&input=" + input,
 					function() { 
 					    console.log("Successfully sent input '" + input + "' for ID: " + id);
-						sendEventState();
+						sendEventState("environment");
+						sendEventState("entities");
 				    },
 					(err) => {
 						console.log("Error sending create request!"); 
@@ -247,7 +265,7 @@
 			////////////////////////////////////////////////
 
 			// takes the JSON state response and draws it out
-			function drawState(rawResponse) {
+			function drawEnvironment(rawResponse) {
 				if(rawResponse == null) {
 					return;
 				}
@@ -264,20 +282,49 @@
 				// Split manually because fillText doesn't handle multiple lines.
 				let toDraw = state.data.split('\n');
 				
-				const offset_vertical = 12;  // line height
-				const offset_horizontal = 7.2; // char width
-				const offset_color_offset = 2;
+			
 				const shade = -1 * document.getElementById("myRange").value; //-40;
 				ctx.font = "12px Courier";
 				
 				for(let y = 0; y < toDraw.length; ++y) {
 					for(let x = 0; x < toDraw[y].length; ++x) {
 						let char = toDraw[y][x];
+
 						let c = getColor(char);
 
 						//ctx.fillRect(x, y, 1, 1 ); // < Accidentally created a minimap
 						ctx.fillStyle = c ? `rgba(${c.r+shade},${c.g+shade},${c.b+shade},${c.a})` : "rgba(20, 30, 40, 1)";
 						ctx.fillRect(x * offset_horizontal, y * offset_vertical + offset_color_offset,  Math.ceil(offset_horizontal),  Math.ceil(offset_vertical));
+						ctx.fillStyle = c ? `rgba(${c.r},${c.g},${c.b},${c.a})`: "white";
+						ctx.fillText(char, offset_horizontal * x, offset_vertical * (y + 1));
+					}
+				}
+			}
+
+			// takes the JSON state response and draws it out
+			function drawEntities(rawResponse) {
+				if(rawResponse == null) {
+					return;
+				}
+
+				let c = document.getElementById("drawspace");
+				let ctx = c.getContext("2d");
+				let state = JSON.parse(rawResponse);
+
+				ctx.beginPath();
+				ctx.font = "12px Courier";
+
+				// Split manually because fillText doesn't handle multiple lines.
+				let toDraw = state.data.split('\n');
+				for(let y = 0; y < toDraw.length; ++y) {
+					for(let x = 0; x < toDraw[y].length; ++x) {
+						let char = toDraw[y][x];
+
+						if(char == ' ')
+							continue;
+
+						let c = getColor(char);
+
 						ctx.fillStyle = c ? `rgba(${c.r},${c.g},${c.b},${c.a})`: "white";
 						ctx.fillText(char, offset_horizontal * x, offset_vertical * (y + 1));
 					}
@@ -346,12 +393,14 @@
 			});
 
 			// Start up at idle tick rate
-			sendEventState();
+			sendEventState("environment");
+			sendEventState("entities");
 			document.getElementById('tick-time').innerHTML = idleTickTime;
 			setInterval(function() { 
 					if(step == 1) {
 						document.getElementById('tick-time').innerHTML = idleTickTime;
-						sendEventState()
+						sendEventState("environment");
+						sendEventState("entities");
 					}
 				}, idleTickTime);
 
@@ -359,7 +408,8 @@
 			setInterval(function() { 
 					if(step == 2) {
 						document.getElementById('tick-time').innerHTML = activeTickTime;
-						sendEventState()
+						sendEventState("environment");
+						sendEventState("entities");
 					}
 				}, activeTickTime);
 		</script>

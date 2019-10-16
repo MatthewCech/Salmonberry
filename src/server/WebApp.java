@@ -31,7 +31,8 @@ public class WebApp extends NanoHTTPD
 	private Supplier<Object> superSecretLinkToForceCallRemoteUpdateFunction; 
 	
 	// Event related
-	private Supplier<String> onEndpointState;    // Input
+	private Supplier<String> onEndpointStateEnvironment; // Input
+	private Supplier<String> onEndpointStateEntities;    // Input
 	private List<Consumer<IEvent>> onEventInput;  // Output
 	private List<Consumer<IEvent>> onEventCreate; // Output
 	
@@ -77,9 +78,15 @@ public class WebApp extends NanoHTTPD
 	}
 	
 	// All called and concatinated when homepage is out
-	public void IN_registerOnEndpointState(Supplier<String> callback)
+	public void IN_registerOnEndpointStateEnvironment(Supplier<String> callback)
 	{
-		onEndpointState = callback;
+		onEndpointStateEnvironment = callback;
+	}
+	
+	// All called and concatinated when homepage is out
+	public void IN_registerOnEndpointStateEntities(Supplier<String> callback)
+	{
+		onEndpointStateEntities = callback;
 	}
 	
 	// All called and concatinated when homepage is out
@@ -229,8 +236,30 @@ public class WebApp extends NanoHTTPD
 	// at a path of "/state"
 	private Response path_state(IHTTPSession session)
 	{
+		Map<String, List<String>> params = session.getParameters();
+		if(params.get("layer") != null && params.get("id") != null)
+		{
+			// Nothing is done with the id param at this point. It could be eventually, tho.
+			String layer = params.get("layer").get(0);
+			String id = params.get("id").get(0);
+			
+			if(layer.equalsIgnoreCase("environment"))
+			{
+				return newSuccessResponse(onEndpointStateEnvironment.get());
+			}
+			else if (layer.equals("entities"))
+			{
+				return newSuccessResponse(onEndpointStateEntities.get());
+			}
+			else
+			{
+				return newFailResponse("The correct parameters were provided, but no layer of type '" + layer + "' exists!");
+			}
+			
+		}
+		
 		// Nothing is done with the id param at this point
-		return newSuccessResponse(onEndpointState.get());
+		return newFailResponse("The parameters 'layer' and 'id' must be specified!");
 	}
 	
 	// at a path of "/input"
