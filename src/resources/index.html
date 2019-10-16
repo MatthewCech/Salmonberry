@@ -34,11 +34,24 @@
 		.step-2 {
 		}
 
-		#drawspace {
-			display: block;
-			margin-right: auto;
-			margin-left: auto;
+		#drawspace-environment {
+  			position: absolute;
+  			top: 0;
+  			left: 0;
 			margin-bottom: 7px;
+		}
+
+		#drawspace-entities {
+  			position: absolute;
+  			top: 0;
+  			left: 0;
+		}
+
+		#drawspace {
+			position: relative;
+			display: inline-block;
+			width: 289px;
+			height: 304px;
 		}
 
 		.controlbutton{
@@ -61,6 +74,10 @@
 			filter: drop-shadow(3px 3px 3px rgba(0, 0, 0, .2));
 			transform: rotate(30deg);
 		}
+
+		.orange {
+			color: rgb(240, 115, 10);
+		}
 	</style>
 
 
@@ -73,10 +90,10 @@
 			<h2 style="margin-bottom: 0px;">Salmonberry</h2>
 			<p class="small" style="margin-top: 0px;">
 				v0.0.4<span class="faded">&emsp;|&emsp;</span>Pre-alpha<span class="faded">&emsp;|&emsp;</span>No saves
-				<br/>Current tick rate: <code style="color: rgb(240, 115, 10)"><span id="tick-time">????</code> ms
+				<br/><strong>Ticks (ms):</strong> Env <span class="orange" id="tick-time">????</span>, Entity <span  class="orange"  id="entity-tick-time">????</span>
 			</p>
 			<div class="slidecontainer">
-  				<div><span class="small" style="float: left; padding-top: 5px;">ASCII Contrast: </span></div><div><input type="range" min="0" max="255" value="40" class="slider" id="myRange" onchange="drawState(lastDrawn);"></div>
+  				<div><span class="small" style="float: left; padding-top: 5px;">ASCII Contrast: </span></div><div><input type="range" min="0" max="255" value="40" class="slider" id="myRange" onchange="drawEnvironment(lastDrawnEnvironment);"></div>
 			</div>
 			<hr class="faded"/>
 			<p>
@@ -90,14 +107,17 @@
 			<!-- STEP 2 -->
 			<hr class="faded"/>
 			<div class="step-2" style="width: 100%; text-align: center;">
-				<canvas id="drawspace" width="289" height="304"></canvas>
+				<div id="drawspace">
+					<canvas id="drawspace-environment" width="289" height="304"></canvas>
+					<canvas id="drawspace-entities" width="289" height="304"></canvas>
+				</div>
 				<form style="margin-top: 0px;">
 					<input class="controlbutton step-2-disabler" type="button" name="input" value="&#9664;" onClick="sendInput('L');">
 					<input class="controlbutton step-2-disabler" type="button" name="input" value="&#9654;" onClick="sendInput('R');">
 					&nbsp;
 					<input class="controlbutton step-2-disabler" type="button" name="input" value="&#9650;" onClick="sendInput('U');">
 					<input class="controlbutton step-2-disabler" type="button" name="input" value="&#9660;" onClick="sendInput('D');">
-					<p class="small" style="margin-bottom: 0px; margin-top: 0px;">WASD and arrow keys work too once joined</p>
+					<p class="small" style="margin-bottom: 0px; margin-top: 0px;">WASD and arrow keys are also valid inputs</p>
 				</form>
 			</div>
 
@@ -121,13 +141,14 @@
 			// Variables: General
 			let id = null;
 			let step = 1;
-			const activeTickTime = 333;
+			const activeTickTime = 300;
 			const idleTickTime = 2000;
 
 			// Variables: Drawing related
 			const offset_vertical = 12;  // line height
 			const offset_horizontal = 7.2; // char width
 			const offset_color_offset = 2;
+			const draw_font = "12px Courier";
 
 			// Groups
 			let bundle1 = document.getElementsByClassName("step-1"); // Section/Step 1
@@ -175,7 +196,7 @@
 			function setVisibility(bundle, isVisible) {
 				for (i = 0; i < bundle.length; i++) {
 					if(isVisible) {
-						bundle[i].style.display = "inline";
+						bundle[i].style.display = "inline-block";
 					} else {
 						bundle[i].style.display = "none";
 					}
@@ -193,8 +214,6 @@
 						setVisibility(bundle2, true);
 						setEnabled(bundle1Disabler, false);
 						setEnabled(bundle2Disabler, true);
-
-						document.getElementById('drawspace').style.opacity = "1";
 
 						sendEventState("environment",()=>{});
 						sendEventState("entities");
@@ -215,20 +234,17 @@
 				console.log(this.responseText)
 			}
 
-			function sendEventState(layer, onfinished) {
+			function sendEventState(layer) {
 				sendRequest("state?id=" + id + "&layer=" + layer,
 					function() {
 						if(layer == "environment") {
 							lastDrawnEnvironment = this.responseText;
-							drawState(this.responseText);
-							onfinished();
+							drawEnvironment(this.responseText);
 						} else if (layer == "entities") {
-							lastDrawnEnvironment = this.responseText;
+							lastDrawnEntities = this.responseText;
 							drawEntities(this.responseText);
-							onfinished();
 						} else {
-							drawState(this.responseText);
-							onfinished();
+							drawEnvironment(this.responseText);
 						}
 					}),
 					(err) => {
@@ -250,8 +266,6 @@
 			function sendInput(input) {
 				sendRequest("input?id=" + id + "&input=" + input,
 					function() { 
-					    console.log("Successfully sent input '" + input + "' for ID: " + id);
-						sendEventState("environment");
 						sendEventState("entities");
 				    },
 					(err) => {
@@ -270,22 +284,20 @@
 					return;
 				}
 
-				let c = document.getElementById("drawspace");
+				let c = document.getElementById("drawspace-environment");
 				let ctx = c.getContext("2d");
 				let state = JSON.parse(rawResponse);
 
-				ctx.beginPath();
-				ctx.rect(0, 0, c.width, c.height);
-				ctx.fillStyle = "rgba(0,0,0,0)";
-				ctx.fill();
 
 				// Split manually because fillText doesn't handle multiple lines.
 				let toDraw = state.data.split('\n');
 				
-			
+				// Clear the canvas before drawing, and set info			
 				const shade = -1 * document.getElementById("myRange").value; //-40;
-				ctx.font = "12px Courier";
+				ctx.clearRect(0, 0, c.width, c.height);
+				ctx.font = draw_font;
 				
+				// Draw it all!
 				for(let y = 0; y < toDraw.length; ++y) {
 					for(let x = 0; x < toDraw[y].length; ++x) {
 						let char = toDraw[y][x];
@@ -307,18 +319,22 @@
 					return;
 				}
 
-				let c = document.getElementById("drawspace");
+				let c = document.getElementById("drawspace-entities");
 				let ctx = c.getContext("2d");
 				let state = JSON.parse(rawResponse);
 
-				ctx.beginPath();
-				ctx.font = "12px Courier";
 
 				// Split manually because fillText doesn't handle multiple lines.
 				let toDraw = state.data.split('\n');
+
+				// Clear canvas before drawign
+				ctx.clearRect(0, 0, c.width, c.height);
+				ctx.font = draw_font;
+
 				for(let y = 0; y < toDraw.length; ++y) {
 					for(let x = 0; x < toDraw[y].length; ++x) {
 						let char = toDraw[y][x];
+
 
 						if(char == ' ')
 							continue;
@@ -329,13 +345,22 @@
 						ctx.fillText(char, offset_horizontal * x, offset_vertical * (y + 1));
 					}
 				}
+
+				if(step == 1)
+				{
+					const height = 24;
+					ctx.fillStyle = "white";
+					ctx.font = "" + height + "px courier";
+					ctx.fillText("Choose a username", 24, height);
+					ctx.fillText("to join the world", 24, height * 2)
+				}
 			}
 
 			// endpoint is the location on the server to hit:
 			function sendRequest(endpoint, onLoad, onError)
 			{
 				let url = "http://{{TARGET_ADDR}}/" + endpoint;
-				console.log("Sending to " + url);
+				//console.log("Sending to " + url);
 				let httpReq = new XMLHttpRequest();
 
 				httpReq.onload = onLoad;
@@ -395,11 +420,15 @@
 			// Start up at idle tick rate
 			sendEventState("environment");
 			sendEventState("entities");
+
 			document.getElementById('tick-time').innerHTML = idleTickTime;
+			document.getElementById('entity-tick-time').innerHTML = idleTickTime;
+
 			setInterval(function() { 
+					sendEventState("environment");
+					document.getElementById('tick-time').innerHTML = idleTickTime;
 					if(step == 1) {
-						document.getElementById('tick-time').innerHTML = idleTickTime;
-						sendEventState("environment");
+						document.getElementById('entity-tick-time').innerHTML = idleTickTime;
 						sendEventState("entities");
 					}
 				}, idleTickTime);
@@ -407,8 +436,7 @@
 			// Prepare for active tick rate
 			setInterval(function() { 
 					if(step == 2) {
-						document.getElementById('tick-time').innerHTML = activeTickTime;
-						sendEventState("environment");
+						document.getElementById('entity-tick-time').innerHTML = activeTickTime;
 						sendEventState("entities");
 					}
 				}, activeTickTime);
