@@ -35,16 +35,16 @@
 		}
 
 		#drawspace-environment {
-  			position: absolute;
-  			top: 0;
-  			left: 0;
+			position: absolute;
+			top: 0;
+			left: 0;
 			margin-bottom: 7px;
 		}
 
 		#drawspace-entities {
-  			position: absolute;
-  			top: 0;
-  			left: 0;
+			position: absolute;
+			top: 0;
+			left: 0;
 		}
 
 		#drawspace {
@@ -315,8 +315,8 @@
 				}
 
 				let time_start = new Date().getTime();
-				let c = document.getElementById("drawspace-environment");
-				let ctx = c.getContext("2d");
+				let canvas = document.getElementById("drawspace-environment");
+				let ctx = canvas.getContext("2d");
 				let state = JSON.parse(rawResponse);
 
 				// Split manually because fillText doesn't handle multiple lines.
@@ -325,7 +325,7 @@
 				// Clear the canvas before drawing, and set info			
 				const shade = -1 * document.getElementById("contrastRange").value; //-40;
 				const weight = document.getElementById("blendRange").value / 100;
-				ctx.clearRect(0, 0, c.width, c.height);
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
 				ctx.font = draw_font;
 				
 				// Draw it all!
@@ -401,11 +401,11 @@
 					}
 				}
 
-
+				// Drawing the ASCII characters
 				for(let y = 0; y < toDraw.length; ++y) {
 					for(let x = 0; x < toDraw[y].length; ++x) {
 						let char = toDraw[y][x];
-
+						
 						let c = getColor(char);
 						ctx.fillStyle = c ? `rgba(${c.r},${c.g},${c.b},${c.a})`: "white";
 						ctx.fillText(char, offset_horizontal * x, offset_vertical * (y + 1));
@@ -414,6 +414,11 @@
 
 				let time_end = new Date().getTime();
 				console.log("Redrew environment in " + (time_end - time_start) + " ms")
+			}
+
+			function setOverlayMessage(messge)
+			{
+
 			}
 
 			// takes the JSON state response and draws it out
@@ -425,7 +430,6 @@
 				let c = document.getElementById("drawspace-entities");
 				let ctx = c.getContext("2d");
 				let state = JSON.parse(rawResponse);
-
 
 				// Split manually because fillText doesn't handle multiple lines.
 				let toDraw = state.data.split('\n');
@@ -454,6 +458,11 @@
 					const height = 24;
 					ctx.fillStyle = "white";
 					ctx.font = "" + height + "px courier";
+
+					ctx.fillStyle = 'rgba(0,0,0,.4)';
+					ctx.fillRect(0, 0, c.width, 60);
+
+					ctx.fillStyle = "white";
 					ctx.fillText("Choose a username", 24, height);
 					ctx.fillText("to join the world", 24, height * 2)
 				}
