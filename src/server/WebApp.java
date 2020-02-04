@@ -59,7 +59,7 @@ public class WebApp extends NanoHTTPD
 		}
 		
 		// Note which format we're running in
-		Note.Log("Running at http://localhost:" + port + "/\n\t" + (isOnDevMachine ? "(dev mode)" : "(release mode)") + "\n");
+		Note.Log("Running at http://127.0.0.1:" + port + "/\n\t" + (isOnDevMachine ? "(dev mode)" : "(release mode)") + "\n");
 		
 		// Start up file manager
 		this.monitor = new DirectoryMonitor(Paths.get(DirectoryMonitor.defaultDir));
