@@ -139,8 +139,8 @@ public class WebApp extends NanoHTTPD
 		}
 		else
 		{
-			Note.Warn("URI Requested that does not exist: " + uri);
-			return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", "{}");
+			Note.Warn(session.getRemoteIpAddress() + " requested nonexistent URI: " + uri);
+			return newFixedLengthResponse(NanoHTTPD.Response.Status.NOT_FOUND, "text/plain", "404 Not Found");
 		}
 	}
 	
