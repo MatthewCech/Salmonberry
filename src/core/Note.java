@@ -3,10 +3,13 @@ package core;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Note
 {
 	private static Integer entryCount = 0;
+	private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 	
 	// Intentionally synchronize the whole thing so we don't have write issues.
 	private static void WriteOut(String toAppend)
@@ -18,7 +21,8 @@ public class Note
 				
 				synchronized(entryCount)
 				{
-					printWriter.println("[" + String.format("%09d", entryCount) + "]" + toAppend); 
+					String dateText = formatter.format(new Date());
+					printWriter.println("[" + dateText + "][" + String.format("%09d", entryCount) + "]" + toAppend); 
 					entryCount += 1;
 					printWriter.close();
 				}

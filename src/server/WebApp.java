@@ -135,7 +135,15 @@ public class WebApp extends NanoHTTPD
 		
 		if(paths.containsKey(uri))
 		{
+			Note.Log(session.getRemoteIpAddress() + " requested URI: " + uri);
 			return paths.get(uri).apply(session);
+		}
+		else if(uri.contains("w00t" + ".at."))
+		{
+			Note.Warn("Script kiddies get Mr. Astley - Request IP: [" + session.getRemoteIpAddress() + "]");
+			Response res = newFixedLengthResponse(Response.Status.REDIRECT, MIME_HTML, "");
+			res.addHeader("Location", "https://youtu.be/dQw4w9WgXcQ");
+			return res;
 		}
 		else
 		{
