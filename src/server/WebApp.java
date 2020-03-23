@@ -136,7 +136,11 @@ public class WebApp extends NanoHTTPD
 		if(paths.containsKey(uri))
 		{
 			Note.Log(session.getRemoteIpAddress() + " requested URI: " + uri);
-			return paths.get(uri).apply(session);
+			Response res = paths.get(uri).apply(session);
+			res.addHeader("Access-Control-Allow-Methods", "GET, POST");
+			res.addHeader("Access-Control-Allow-Origin",  "*");
+			res.addHeader("Access-Control-Allow-Headers", "*");
+			return res;
 		}
 		else if(uri.contains("w00t" + ".at."))
 		{

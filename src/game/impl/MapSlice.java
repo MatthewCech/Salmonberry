@@ -64,7 +64,7 @@ public class MapSlice implements IMapSlice
 	
 	public String get(int x, int y)
 	{
-		if(!verify(x, y))
+		if(!verifySilent(x, y))
 			return null;
 		
 		return map.get(y).get(x);
@@ -94,6 +94,21 @@ public class MapSlice implements IMapSlice
 			return;
 	
 		map.get(y).set(x, newValue);
+	}
+	
+	private boolean verifySilent(int x, int y)
+	{
+		if(x < 0 || x > width - 1)
+		{
+			return false;
+		}
+		
+		if(y < 0 || y > height - 1)
+		{
+			return false;
+		}
+		
+		return true;
 	}
 	
 	// Utility function to determine if something is in or out of range
