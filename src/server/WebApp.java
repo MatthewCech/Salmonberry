@@ -59,7 +59,7 @@ public class WebApp extends NanoHTTPD
 		}
 		
 		// Note which format we're running in
-		Note.Log("Running at http://localhost:" + port + "/\n\t" + (isOnDevMachine ? "(dev mode)" : "(release mode)") + "\n");
+		Note.Log("Running at http://127.0.0.1:" + port + "/\n\t" + (isOnDevMachine ? "(dev mode)" : "(release mode)") + "\n");
 		
 		// Start up file manager
 		this.monitor = new DirectoryMonitor(Paths.get(DirectoryMonitor.defaultDir));
@@ -135,12 +135,24 @@ public class WebApp extends NanoHTTPD
 		
 		if(paths.containsKey(uri))
 		{
-			return paths.get(uri).apply(session);
+			Note.Log(session.getRemoteIpAddress() + " requested URI: " + uri);
+			Response res = paths.get(uri).apply(session);
+			res.addHeader("Access-Control-Allow-Methods", "GET, POST");
+			res.addHeader("Access-Control-Allow-Origin",  "*");
+			res.addHeader("Access-Control-Allow-Headers", "*");
+			return res;
+		}
+		else if(uri.contains("w00t" + ".at."))
+		{
+			Note.Warn("Script kiddies get Mr. Astley - Request IP: [" + session.getRemoteIpAddress() + "]");
+			Response res = newFixedLengthResponse(Response.Status.REDIRECT, MIME_HTML, "");
+			res.addHeader("Location", "https://youtu.be/dQw4w9WgXcQ");
+			return res;
 		}
 		else
 		{
-			Note.Warn("URI Requested that does not exist: " + uri);
-			return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", "{}");
+			Note.Warn(session.getRemoteIpAddress() + " requested nonexistent URI: " + uri);
+			return newFixedLengthResponse(NanoHTTPD.Response.Status.NOT_FOUND, "text/plain", "404 Not Found");
 		}
 	}
 	

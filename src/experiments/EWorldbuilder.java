@@ -2,7 +2,9 @@ package experiments;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.LoggingMXBean;
 
+import core.Note;
 import game.api.IMapSlice;
 import game.data.Constants;
 import game.data.Point;
@@ -22,12 +24,16 @@ public class EWorldbuilder
 
 	public static void generateLumpyIsland(IMapSlice map, SalmonRandom rand)
 	{
+		Note.Log("----------");
+		Note.Log("Starting map generation");
+		
 		// Acquire info
 		int height = map.getHeight();
 		int width = map.getWidth();
 		String water = Constants.water;
 		
 		// Fill with defaults
+		Note.Log("Cleaning slate...");
 		for(int y = 0; y < height; ++y)
 		{
 			for(int x = 0; x < width; ++x)
@@ -37,7 +43,9 @@ public class EWorldbuilder
 			}
 		}
 		
+		
 		// Get hubs
+		Note.Log("Placing hubs...");
 		List<Point> hubs = new ArrayList<Point>();
 		hubs.add(new Point(1, 1));
 		hubs.add(Point.random(width, height, rand));
@@ -71,7 +79,9 @@ public class EWorldbuilder
 			}
 		}
 		
+		
 		// Build islands and grass
+		Note.Log("Growing islands...");			
 		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .8f, rand);
 		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .7f, rand);
 		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .6f, rand);
@@ -84,7 +94,7 @@ public class EWorldbuilder
 		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .1f, rand);
 		growIconWithChance(map, Constants.grass, Constants.grass, Constants.house, .1f, rand);
 		
-		// Build houses
+		// Build dirt
 		growIconWithChance(map, Constants.grass, Constants.dirt, Constants.house, .2f, rand);
 		
 		// Build sand
@@ -94,6 +104,7 @@ public class EWorldbuilder
 		placeIfUniformSurroundings(map, 4, Constants.water, Constants.ocean);
 		
 		// Build roads
+		Note.Log("Adding roads..");
 		for(int i = 0; i < hubs.size() - 1; ++i)
 		{
 			Point current = hubs.get(i).clone();
@@ -116,6 +127,9 @@ public class EWorldbuilder
 				map.set(current.x, current.y, Constants.road);
 			}
 		}
+		
+		Note.Log("Finished map generation!");
+		Note.Log("----------");
 	}
 	
 	private static void placeIfUniformSurroundings(IMapSlice map, int dist, String target, String replacement)
@@ -228,16 +242,16 @@ public class EWorldbuilder
 				
 				if(current == target)
 				{
-					if(left != exclude && rand.nextDouble() < chance)
+					if(left != null && left != exclude && rand.nextDouble() < chance)
 						temp.set(x - 1, y, growth);
 					
-					if(right != exclude && rand.nextDouble() < chance)
+					if(right != null && right != exclude && rand.nextDouble() < chance)
 						temp.set(x + 1, y, growth);
 					
-					if(up != exclude && rand.nextDouble() < chance)
+					if(up != null && up != exclude && rand.nextDouble() < chance)
 						temp.set(x, y - 1, growth);
 					
-					if(down != exclude && rand.nextDouble() < chance)
+					if(down != null && down != exclude && rand.nextDouble() < chance)
 						temp.set(x, y + 1, growth);
 				}
 			}

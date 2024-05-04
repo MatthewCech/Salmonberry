@@ -35,6 +35,20 @@ public class Main
 		{
 			world.update();
 			webapp.update();
+			
+			sleep(1);
+		}
+	}
+	
+	private static void sleep(long milliseconds)
+	{
+		try
+		{
+			Thread.sleep(milliseconds);
+		}
+		catch (InterruptedException e)
+		{
+			Note.Error("Issue during scheduled sleep! " + e);
 		}
 	}
 	
