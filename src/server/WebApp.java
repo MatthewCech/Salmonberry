@@ -1,6 +1,7 @@
 package server;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -10,18 +11,17 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.Properties;
 
 import core.Note;
 import fi.iki.elonen.NanoHTTPD;
 import game.api.IEvent;
 import game.events.EventCreate;
 import game.events.EventInput;
-import jdk.nashorn.internal.runtime.JSONFunctions;
 
 public class WebApp extends NanoHTTPD
 {
 	// Variables
-	public static final int port = 80;
 	private Map<String, String> pages;
 	private DirectoryMonitor monitor;
 	private Map<String, Function<IHTTPSession, Response>> paths;
@@ -36,11 +36,21 @@ public class WebApp extends NanoHTTPD
 	private List<Consumer<IEvent>> onEventInput;  // Output
 	private List<Consumer<IEvent>> onEventCreate; // Output
 	
+	// Properties
+	private static final Properties properties = new Properties();
+	private static final String propertiesPath = "salmonberry.properties";
+	private static final String propertyPort_KEY = "port";
+	private static final String propertyNotes_KEY = "notes";
+	private static final String propertyHost_KEY = "host";
+	private static int propertyPort;
+	private static String propertyNotes;
+	private static String propertyHost;
+	
 	// Constructor
 	public WebApp()
 	{
-		super(port);
-	
+		super(LoadProperties());
+		
 		this.paths = new HashMap<String, Function<IHTTPSession, Response>>();
 		this.onEventInput = new ArrayList<Consumer<IEvent>>();
 		this.onEventCreate = new ArrayList<Consumer<IEvent>>();
@@ -59,43 +69,73 @@ public class WebApp extends NanoHTTPD
 		}
 		
 		// Note which format we're running in
-		Note.Log("Running at http://127.0.0.1:" + port + "/\n\t" + (isOnDevMachine ? "(dev mode)" : "(release mode)") + "\n");
+		Note.Log("Running at 127.0.0.1:" + propertyPort + "/\n\t" + (isOnDevMachine ? "(dev mode)" : "(release mode)") + "\n");
 		
 		// Start up file manager
 		this.monitor = new DirectoryMonitor(Paths.get(DirectoryMonitor.defaultDir));
 		this.pages = monitor.getFileContents();
 	}
 	
+	// Loads properties and returns port.
+	// Allow for using this during super constructor time, but still perform other general activities.
+	// TODO: Move port assignment out by extracting web app from nanoHTTPD bawse
+	public static int LoadProperties()
+	{
+		try
+		{
+			String path = ClassLoader.getSystemClassLoader().getResource(".").getPath() + "/" + propertiesPath;
+			
+			FileInputStream file = new FileInputStream(path);
+			properties.load(file);
+			file.close();
+			
+			String portVar = properties.getProperty(propertyPort_KEY);
+			propertyPort = Integer.parseInt(portVar);
+			propertyNotes = properties.getProperty(propertyNotes_KEY);
+			propertyHost = properties.getProperty(propertyHost_KEY);
+		}
+		catch (Exception e)
+		{
+			final int fallbackPort = 80;
+			
+			e.printStackTrace();
+			Note.Error("Failed to read custom port from " + propertiesPath);
+			Note.Warn("Using fallback port " + fallbackPort);
+			propertyPort = fallbackPort;
+		}
+		
+		return propertyPort;
+	}
 	
 	  ///////////////////////
 	 // Message Functions //
 	///////////////////////
 	
-	// Binds an event that allows something to recieve a callback only once when updated.
+	// Binds an event that allows something to receive a callback only once when updated.
 	public void BIND_theUpdateFunction(Supplier<Object> onUpdateOnce)
 	{
 		this.superSecretLinkToForceCallRemoteUpdateFunction = onUpdateOnce;
 	}
 	
-	// All called and concatinated when homepage is out
+	// All called and concatenated when home page is out
 	public void IN_registerOnEndpointStateEnvironment(Supplier<String> callback)
 	{
 		onEndpointStateEnvironment = callback;
 	}
 	
-	// All called and concatinated when homepage is out
+	// All called and concatenated when home page is out
 	public void IN_registerOnEndpointStateEntities(Supplier<String> callback)
 	{
 		onEndpointStateEntities = callback;
 	}
 	
-	// All called and concatinated when homepage is out
+	// All called and concatenated when home page is out
 	public void OUT_registerOnEventInput(Consumer<IEvent> callback)
 	{
 		onEventInput.add(callback);
 	}
 	
-	// All called and concatinated when homepage is out
+	// All called and concatenated when home page is out
 	public void OUT_registerOnEventCreate(Consumer<IEvent> callback)
 	{
 		onEventCreate.add(callback);
@@ -112,7 +152,7 @@ public class WebApp extends NanoHTTPD
 	{
 		try
 		{
-			if(monitor.update())
+			if(monitor != null && monitor.update())
 			{
 				pages = monitor.getFileContents();
 				pages.forEach((key, value) -> { Note.Log("File '" + key + "' found, has " + value.length() + " chars in it."); });
@@ -128,7 +168,7 @@ public class WebApp extends NanoHTTPD
 	}
 	
 	@Override
-	// This function is called when an HTTP request is recieved!
+	// This function is called when an HTTP request is received!
 	public Response serve(IHTTPSession session)
 	{
 		String uri = session.getUri();
@@ -137,16 +177,11 @@ public class WebApp extends NanoHTTPD
 		{
 			Note.Log(session.getRemoteIpAddress() + " requested URI: " + uri);
 			Response res = paths.get(uri).apply(session);
-			res.addHeader("Access-Control-Allow-Methods", "GET, POST");
-			res.addHeader("Access-Control-Allow-Origin",  "*");
-			res.addHeader("Access-Control-Allow-Headers", "*");
-			return res;
-		}
-		else if(uri.contains("w00t" + ".at."))
-		{
-			Note.Warn("Script kiddies get Mr. Astley - Request IP: [" + session.getRemoteIpAddress() + "]");
-			Response res = newFixedLengthResponse(Response.Status.REDIRECT, MIME_HTML, "");
-			res.addHeader("Location", "https://youtu.be/dQw4w9WgXcQ");
+			res.addHeader("Access-Control-Allow-Origin", "*");
+			res.addHeader("Access-Control-Max-Age", "3628800");
+			res.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
+			res.addHeader("Access-Control-Allow-Headers", "X-Requested-With");
+			res.addHeader("Access-Control-Allow-Headers", "Authorization");
 			return res;
 		}
 		else
@@ -170,7 +205,7 @@ public class WebApp extends NanoHTTPD
 	// In the event of failure, standardize the failure message.
 	private Response newFailResponse(String message)
 	{
-		String res = "{ \"status\":\"fail\", \"data\":" + JSONFunctions.quote(message) + "}"; 
+		String res = "{ \"status\":\"fail\", \"data\":" + core.Utils.BasicEscapeJSON(message) + "}"; 
 		return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "application/json", res); 
 	}
 	
@@ -181,7 +216,7 @@ public class WebApp extends NanoHTTPD
 	}
 	private Response newSuccessResponse(String data)
 	{
-		String res = "{ \"status\":\"ok\", \"data\":" + JSONFunctions.quote(data) + "}"; 
+		String res = "{ \"status\":\"ok\", \"data\":" + core.Utils.BasicEscapeJSON(data) + "}"; 
 		return newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "application/json", res); 
 	}
 	
@@ -190,6 +225,7 @@ public class WebApp extends NanoHTTPD
 	///////////////////
 
 	// at a path of "/"
+	// TODO: pull out index.html read and cache if applicable.
 	private Response path_(IHTTPSession session)
 	{
 		String defautPage = "index.html";
@@ -211,16 +247,20 @@ public class WebApp extends NanoHTTPD
 			}
 		}
 		
+		content = content.replace("{{TARGET_VERSION}}", core.Constants.version);
+		content = content.replace("{{TARGET_VERSION_BUCKET}}", core.Constants.version_bucket);
+		content = content.replace("{{TARGET_NOTES}}", propertyNotes == null ? "" : propertyNotes);
+		
 		if(isOnDevMachine)
 		{
 			content = content.replace("{{TARGET_ADDR}}", "127.0.0.1");
 		}
 		else
 		{
-			content = content.replace("{{TARGET_ADDR}}", "salmonberry.info");
+			content = content.replace("{{TARGET_ADDR}}", propertyHost);
 		}
 		
-		// Return homepage
+		// Return home page
 		return newFixedLengthResponse(content);
 	}
 	
@@ -251,7 +291,7 @@ public class WebApp extends NanoHTTPD
 		Map<String, List<String>> params = session.getParameters();
 		if(params.get("layer") != null && params.get("id") != null)
 		{
-			// Nothing is done with the id param at this point. It could be eventually, tho.
+			// Nothing is done with the id param at this point. It could be eventually, though.
 			String layer = params.get("layer").get(0);
 			String id = params.get("id").get(0);
 			

@@ -100,7 +100,7 @@
 
 			<h2 style="margin-bottom: 0px;">Salmonberry</h2>
 			<p class="small" style="margin-top: 0px;">
-				v0.0.6<span class="faded">&emsp;|&emsp;</span>Pre-alpha<span class="faded">&emsp;|&emsp;</span>No saves
+				{{TARGET_VERSION}}<span class="faded">&emsp;|&emsp;</span>{{TARGET_VERSION_BUCKET}}<span class="faded">&emsp;|&emsp;</span>{{TARGET_NOTES}}
 				<br/><strong>Ticks (ms):</strong> Env <span class="orange" id="tick-time">????</span>, Entity <span  class="orange"  id="entity-tick-time">????</span>
 			</p>
 			<div class="sliders">
@@ -471,7 +471,7 @@
 			// endpoint is the location on the server to hit:
 			function sendRequest(endpoint, onLoad, onError)
 			{
-				let url = "http://{{TARGET_ADDR}}/" + endpoint;
+				let url = "https://{{TARGET_ADDR}}/" + endpoint;
 				//console.log("Sending to " + url);
 				let httpReq = new XMLHttpRequest();
 
